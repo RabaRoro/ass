@@ -11,5 +11,18 @@
     "description": "asdf",
     "specs": "asdf",
     "shard": "shard-1.json"
+  },
+  {
+    "id": "1789214032400",
+    "slug": "aula-f75-pro",
+    "name": "AULA F75 Pro",
+    "category": "Keyboards",
+    "price": "৳6,100 - ৳6,800",
+    "score": "9.6",
+    "image": "https://aulagear.com/cdn/shop/files/203A5822.jpg?crop=center&height=2048&v=1734921227&width=2048",
+    "hotDeal": false,
+    "description": "The AULA F99 combines the convenience of an integrated numeric keypad with high-end gasket structure engineering, endless battery life, and ultra-smooth linear switches, making it the definitive productivity and gaming beast.",
+    "specs": "Brand: AULA\nModel: F99\nLayout: 96% Compact (99 Keys with Numpad)\nMounting Structure: Gasket-Mounted with Slotted PCB\nSwitch Type: Factory-Lubed Linear (Gray Wood V3 / Hot-Swappable)\nConnectivity: Bluetooth / 2.4GHz Wireless / USB-C Wired\nBattery Capacity: 8000mAh Ultra-High Capacity\nBacklight: 16.8 Million Color RGB\nWeight: Approx. 1180g\nWarranty: 1 Year",
+    "shard": "shard-1.json"
   }
 ]
