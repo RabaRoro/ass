@@ -1,0 +1,28 @@
+[
+  {
+    "id": "1789202774843",
+    "name": "Test",
+    "category": "Keyboards",
+    "color": "aa",
+    "score": "10",
+    "pros": [
+      "awsdfasdf"
+    ],
+    "cons": [
+      "asdfasdf"
+    ],
+    "verdict": "asdfasdf",
+    "description": "asdfasdf",
+    "metaDescription": "asdfasdf",
+    "detailedDescription": "fasdfasdfasdfasdf",
+    "specs": "asdfasdf:a\na:a",
+    "images": [
+      "asdasd"
+    ],
+    "merchants": [
+      "asdasd"
+    ],
+    "hotDeal": false,
+    "timestamp": 1789202774843
+  }
+]
