@@ -1,96 +1,5 @@
 [
   {
-    "id": "1789205217250",
-    "name": "Ajazz AK820 Pro",
-    "category": "Keyboards",
-    "price": "৳4,500 - ৳4,900",
-    "score": "9.2",
-    "pros": [
-      "Built-in customizable TFT color screen for stats and GIFs",
-      "True gasket mount structure with a soft, flex-friendly typing feel",
-      "Smooth, factory-lubricated linear switches out of the box",
-      "Reliable tri-mode connectivity (2.4G wireless, Bluetooth, and wired)",
-      "Incredible feature-to-price ratio"
-    ],
-    "cons": [
-      "Companion software for uploading custom screen GIFs can be unintuitive",
-      "Plastic chassis feels a bit lightweight compared to heavy aluminum builds",
-      "OEM profile keycaps may require a slight adjustment period"
-    ],
-    "verdict": "The Ajazz AK820 Pro stands out in a crowded market by offering luxury touches like a functional TFT smart display and gasket structure at a very low price. If you want a unique aesthetic and great sound without spending a fortune, this is a phenomenal option.",
-    "description": "Explore the Ajazz AK820 Pro, a 75% gasket-mounted mechanical keyboard featuring a built-in TFT smart display, tri-mode connectivity, and factory-lubed switches.",
-    "metaDescription": "The Ajazz AK820 Pro redefines budget features by packing a customizable TFT smart screen, a true gasket mounting structure, and multi-layer dampening into an affordable 75% frame.",
-    "detailedDescription": "",
-    "specs": "Brand: Ajazz\nModel: AK820 Pro\nLayout: 75% Compact (82 Keys + TFT Screen + Knob)\nMounting Structure: Gasket-Mounted\nSwitch Type: Factory-Lubed Linear (Hot-Swappable)\nConnectivity: Bluetooth / 2.4GHz Wireless / USB-C Wired\nBattery Capacity: 4000mAh\nKeycaps: OEM Profile PBT\nBacklight: South-Facing RGB\nWeight: Approx. 810g\nWarranty: 1 Year",
-    "subScores": "Build Quality: 8.5/10\nTyping Feel & Acoustics: 9/10\nFeatures & Display: 9.5/10\nValue for Money: 9.5/10",
-    "images": [
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDPDBrjDt9X2WK72kQ0bEjAGMeNuzr2M7Gdgtc4fRmCV2u77aJm0YXAtPu&s=10"
-    ],
-    "merchants": [
-      "Tech Diversity|https://techdiversitybd.com/",
-      "Star Tech|https://www.startech.bd/"
-    ],
-    "authorName": "Alu",
-    "authorUrl": "alu",
-    "hotDeal": false,
-    "timestamp": 1789205217250
-  },
-  {
-    "id": "1789204305266",
-    "name": "lala",
-    "category": "Keyboards",
-    "price": "5200",
-    "score": "9",
-    "pros": [
-      "asdf"
-    ],
-    "cons": [
-      "asdf"
-    ],
-    "verdict": "asdf",
-    "description": "asda",
-    "metaDescription": "asdfasd",
-    "detailedDescription": "asdfasdfasdf",
-    "specs": "asdf",
-    "subScores": "asdfasdf",
-    "images": [
-      "asdfadf"
-    ],
-    "merchants": [
-      "asdf"
-    ],
-    "authorName": "asdf",
-    "authorUrl": "asdf",
-    "hotDeal": false,
-    "timestamp": 1789204305266
-  },
-  {
-    "id": "1789202774843",
-    "name": "Test",
-    "category": "Keyboards",
-    "color": "aa",
-    "score": "10",
-    "pros": [
-      "awsdfasdf"
-    ],
-    "cons": [
-      "asdfasdf"
-    ],
-    "verdict": "asdfasdf",
-    "description": "asdfasdf",
-    "metaDescription": "asdfasdf",
-    "detailedDescription": "fasdfasdfasdfasdf",
-    "specs": "asdfasdf:a\na:a",
-    "images": [
-      "asdasd"
-    ],
-    "merchants": [
-      "asdasd"
-    ],
-    "hotDeal": false,
-    "timestamp": 1789202774843
-  },
-  {
     "id": "1789204610554",
     "name": "AULA F75 Pro",
     "category": "Keyboards",
@@ -129,40 +38,94 @@
     "timestamp": 1789204790802
   },
   {
-    "id": "1789205323905",
-    "name": "Royal Kludge RK R75",
+    "id": "1789202774843",
+    "name": "Test",
     "category": "Keyboards",
-    "price": "৳4,100 - ৳4,500",
-    "score": "9.0",
+    "color": "aa",
+    "score": "10",
     "pros": [
-      "Exceptional out-of-the-box acoustic profile with multi-layer dampening foam",
-      "Pure elastic gasket-mounted structure provides a soft, cushioned typing feel",
-      "Full-key hot-swappable sockets support effortless switch customization",
-      "Compact 75% layout saves massive amounts of desk space",
-      "Durable double-shot PBT keycaps resist shine and oil buildup",
-      "Convenient dedicated hardware volume control knob"
+      "awsdfasdf"
     ],
     "cons": [
-      "Wired-only configuration on standard base models limits wireless setups",
-      "Lightweight plastic chassis lacks the hefty, dense feel of custom aluminum builds",
-      "Proprietary software can occasionally feel clunky for advanced macro programming"
+      "asdfasdf"
     ],
-    "verdict": "The Royal Kludge RK R75 is an absolute triumph for budget-conscious enthusiasts. By introducing true gasket-mounted flexibility and multi-layered sound insulation to an entry-level price point, it delivers an acoustic and ergonomic experience that completely shatters expectations. If you want a phenomenal desktop upgrade without breaking the bank, the RK R75 is an essential buy.",
-    "description": "Dive into the Royal Kludge RK R75, a compact 75% gasket-mounted keyboard boasting a pure elastic structure, multi-layer sound dampening, and rapid-response switches.",
-    "metaDescription": "The Royal Kludge RK R75 brings elite gasket-mounted performance, stunning RGB lighting, and custom-level acoustic dampening down to an entry-level price point, setting a new bar for budget mechanical boards.",
-    "detailedDescription": "",
-    "specs": "Brand: Royal Kludge\nModel: RK R75\nLayout: 75% Compact (82 Keys)\nMounting Structure: Pure Elastic Gasket-Mounted\nSwitch Type: Hot-Swappable (RK Silver / Brown Options)\nConnectivity: Wired USB-C\nKeycaps: OEM Height Double-Shot PBT\nBacklight: Customizable RGB\nWeight: Approx. 800g\nWarranty: 1 Year",
-    "subScores": "Build Quality: 8.5/10\nTyping Feel & Acoustics: 9.5/10\nCustomization & Hot-Swap: 9.0/10\nValue for Money: 9.5/10",
+    "verdict": "asdfasdf",
+    "description": "asdfasdf",
+    "metaDescription": "asdfasdf",
+    "detailedDescription": "fasdfasdfasdfasdf",
+    "specs": "asdfasdf:a\na:a",
     "images": [
-      "https://vibegaming.com.bd/wp-content/uploads/2024/08/Yeston-6-2.png"
+      "asdasd"
     ],
     "merchants": [
-      "Tech Diversity|https://techdiversitybd.com/royal-kludge-r75-mechanical-keyboard/",
-      "Star Tech|https://www.startech.com.bd/royal-kludge-rk-r75-mechanical-keyboard"
+      "asdasd"
+    ],
+    "hotDeal": false,
+    "timestamp": 1789202774843
+  },
+  {
+    "id": "1789204305266",
+    "name": "lala",
+    "category": "Keyboards",
+    "price": "5200",
+    "score": "9",
+    "pros": [
+      "asdf"
+    ],
+    "cons": [
+      "asdf"
+    ],
+    "verdict": "asdf",
+    "description": "asda",
+    "metaDescription": "asdfasd",
+    "detailedDescription": "asdfasdfasdf",
+    "specs": "asdf",
+    "subScores": "asdfasdf",
+    "images": [
+      "asdfadf"
+    ],
+    "merchants": [
+      "asdf"
+    ],
+    "authorName": "asdf",
+    "authorUrl": "asdf",
+    "hotDeal": false,
+    "timestamp": 1789204305266
+  },
+  {
+    "id": "1789205217250",
+    "name": "Ajazz AK820 Pro",
+    "category": "Keyboards",
+    "price": "৳4,500 - ৳4,900",
+    "score": "9.2",
+    "pros": [
+      "Built-in customizable TFT color screen for stats and GIFs",
+      "True gasket mount structure with a soft, flex-friendly typing feel",
+      "Smooth, factory-lubricated linear switches out of the box",
+      "Reliable tri-mode connectivity (2.4G wireless, Bluetooth, and wired)",
+      "Incredible feature-to-price ratio"
+    ],
+    "cons": [
+      "Companion software for uploading custom screen GIFs can be unintuitive",
+      "Plastic chassis feels a bit lightweight compared to heavy aluminum builds",
+      "OEM profile keycaps may require a slight adjustment period"
+    ],
+    "verdict": "The Ajazz AK820 Pro stands out in a crowded market by offering luxury touches like a functional TFT smart display and gasket structure at a very low price. If you want a unique aesthetic and great sound without spending a fortune, this is a phenomenal option.",
+    "description": "Explore the Ajazz AK820 Pro, a 75% gasket-mounted mechanical keyboard featuring a built-in TFT smart display, tri-mode connectivity, and factory-lubed switches.",
+    "metaDescription": "The Ajazz AK820 Pro redefines budget features by packing a customizable TFT smart screen, a true gasket mounting structure, and multi-layer dampening into an affordable 75% frame.",
+    "detailedDescription": "",
+    "specs": "Brand: Ajazz\nModel: AK820 Pro\nLayout: 75% Compact (82 Keys + TFT Screen + Knob)\nMounting Structure: Gasket-Mounted\nSwitch Type: Factory-Lubed Linear (Hot-Swappable)\nConnectivity: Bluetooth / 2.4GHz Wireless / USB-C Wired\nBattery Capacity: 4000mAh\nKeycaps: OEM Profile PBT\nBacklight: South-Facing RGB\nWeight: Approx. 810g\nWarranty: 1 Year",
+    "subScores": "Build Quality: 8.5/10\nTyping Feel & Acoustics: 9/10\nFeatures & Display: 9.5/10\nValue for Money: 9.5/10",
+    "images": [
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDPDBrjDt9X2WK72kQ0bEjAGMeNuzr2M7Gdgtc4fRmCV2u77aJm0YXAtPu&s=10"
+    ],
+    "merchants": [
+      "Tech Diversity|https://techdiversitybd.com/",
+      "Star Tech|https://www.startech.bd/"
     ],
     "authorName": "Alu",
-    "authorUrl": "Alu",
+    "authorUrl": "alu",
     "hotDeal": false,
-    "timestamp": 1789205323905
+    "timestamp": 1789205217250
   }
 ]
