@@ -165,7 +165,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       loadProducts().then(renderAdminList);
     }
 
-    // Auto-format double spaces into '|' for Textareas
     const replaceDoubleSpace = function(e) {
       if (this.value.includes('  ')) {
         const start = this.selectionStart;
@@ -211,7 +210,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const btn = document.getElementById('submit-btn');
       btn.innerHTML = `Saving...`;
       
-      // Auto-Score logic
       let finalScore = document.getElementById('p-score').value.trim();
       const subScoresText = document.getElementById('p-subscores').value.trim();
       const parsedSub = parseDataList(subScoresText);
@@ -225,7 +223,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(count > 0) finalScore = (sum / count).toFixed(1);
       }
       
-      // Fallback if completely empty
       if(!finalScore) finalScore = "0";
 
       const product = {
@@ -309,7 +306,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           document.getElementById('p-author-image').value = p.authorImage || '';
           document.getElementById('p-author-socials').value = (p.authorSocials || []).join('\n');
           
-          // Backwards compatibility for legacy author url
           if (!p.authorSocials && p.authorUrl) {
               document.getElementById('p-author-socials').value = `Link|${p.authorUrl}`;
           }
@@ -349,23 +345,106 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (document.getElementById('products-grid')) {
     const container = document.getElementById('products-grid');
     const searchInput = document.getElementById('search-input');
+    
+    // New Filter Elements
+    const minPriceInput = document.getElementById('filter-price-min');
+    const maxPriceInput = document.getElementById('filter-price-max');
+    const layoutSelect = document.getElementById('filter-layout');
+    const connSelect = document.getElementById('filter-connectivity');
+
     const products = await loadProducts();
     
+    // Auto-parse Layouts & Connectivities directly from product specs
+    const layouts = new Set();
+    const connectivities = new Set();
+    
+    products.forEach(p => {
+      const specs = parseDataList(p.specs);
+      if (specs['Layout']) {
+        layouts.add(specs['Layout']);
+      }
+      if (specs['Connectivity']) {
+        // Split complex connectivity strings (e.g. "Bluetooth / 2.4GHz") into distinct options
+        specs['Connectivity'].split(/[\/,]/).map(s => s.trim()).filter(Boolean).forEach(c => connectivities.add(c));
+      }
+    });
+
+    if (layoutSelect) {
+      layouts.forEach(l => {
+        const opt = document.createElement('option');
+        opt.value = l; opt.textContent = l;
+        layoutSelect.appendChild(opt);
+      });
+    }
+    
+    if (connSelect) {
+      connectivities.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c; opt.textContent = c;
+        connSelect.appendChild(opt);
+      });
+    }
+
     const params = new URLSearchParams(window.location.search);
     if (params.get('search') && searchInput) searchInput.value = params.get('search');
 
     function renderGrid() {
       let result = [...products].reverse();
+      
+      // 1. Filter by Search Query
       if (searchInput && searchInput.value) {
         const q = searchInput.value.toLowerCase();
         result = result.filter(p => p.name.toLowerCase().includes(q));
       }
+      
+      // 2. Filter by Category (if coming from Index)
+      const categoryParam = params.get('category');
+      if (categoryParam) {
+          result = result.filter(p => p.category && p.category.toLowerCase() === categoryParam.toLowerCase());
+      }
+
+      // 3. Apply Multi-layered Specs & Price Filters
+      if (minPriceInput && maxPriceInput && layoutSelect && connSelect) {
+        const minPrice = parseFloat(minPriceInput.value);
+        const maxPrice = parseFloat(maxPriceInput.value);
+        const selectedLayout = layoutSelect.value;
+        const selectedConn = connSelect.value;
+        
+        result = result.filter(p => {
+          const specs = parseDataList(p.specs);
+          
+          // Parse price range strings securely 
+          let pPrice = null;
+          if (p.price) {
+            const priceStr = p.price.replace(/,/g, ''); 
+            const match = priceStr.match(/\d+(\.\d+)?/);
+            if (match) pPrice = parseFloat(match[0]);
+          }
+          
+          let passMin = isNaN(minPrice) || (pPrice !== null && pPrice >= minPrice);
+          let passMax = isNaN(maxPrice) || (pPrice !== null && pPrice <= maxPrice);
+          let passLayout = !selectedLayout || (specs['Layout'] === selectedLayout);
+          let passConn = !selectedConn || (specs['Connectivity'] && specs['Connectivity'].includes(selectedConn));
+          
+          return passMin && passMax && passLayout && passConn;
+        });
+      }
+
       container.innerHTML = '';
-      if (!result.length) container.innerHTML = `<div class="col-span-full text-center py-12 text-outline bg-surface-container-low rounded-xl">No reviews found.</div>`;
-      else result.forEach(p => container.appendChild(createProductCard(p)));
+      if (!result.length) {
+        container.innerHTML = `<div class="col-span-full text-center py-12 text-outline bg-surface-container-low rounded-xl border border-white/5">No reviews found matching your criteria.</div>`;
+      } else {
+        result.forEach(p => container.appendChild(createProductCard(p)));
+      }
     }
     
+    // Bind Realtime Event Listeners
     if (searchInput) searchInput.addEventListener('input', renderGrid);
+    if (minPriceInput) minPriceInput.addEventListener('input', renderGrid);
+    if (maxPriceInput) maxPriceInput.addEventListener('input', renderGrid);
+    if (layoutSelect) layoutSelect.addEventListener('change', renderGrid);
+    if (connSelect) connSelect.addEventListener('change', renderGrid);
+
     renderGrid();
   }
 
@@ -394,7 +473,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('main-image').src = product.images[0];
     }
 
-    // Build Specifications Block
     const specs = parseDataList(product.specs);
     const specsGrid = document.getElementById('product-specs-grid');
     if (Object.keys(specs).length > 0) {
@@ -408,7 +486,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       specsGrid.innerHTML = `<span class="text-outline">No specs provided.</span>`;
     }
 
-    // Build Epic Games-style Circular Sub-scores
     const subscores = parseDataList(product.subScores);
     const subscoresGrid = document.getElementById('subscores-grid');
     if (Object.keys(subscores).length > 0) {
@@ -432,7 +509,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       }).join('');
     }
 
-    // Build Pros & Cons
     const proConSection = document.getElementById('pros-cons-section');
     if (product.pros?.length || product.cons?.length) {
       let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">`;
@@ -448,7 +524,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       proConSection.innerHTML = html;
     }
 
-    // Final Verdict
     const verdictContainer = document.getElementById('verdict-container');
     if (product.verdict) {
       verdictContainer.innerHTML = `
@@ -458,7 +533,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>`;
     }
     
-    // Author Box Expanded capabilities
     const authorContainer = document.getElementById('author-container');
     if (product.authorName) {
       let socialsHTML = '';
@@ -485,7 +559,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>`;
     }
 
-    // Side-by-side Merchant Links
     const orderRow = document.getElementById('order-row');
     if (product.merchants && product.merchants.length > 0) {
       orderRow.innerHTML = product.merchants.map(m => {
@@ -501,7 +574,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       orderRow.innerHTML = '<div class="px-4 py-2 bg-surface-container rounded-lg text-outline text-sm border border-white/5">No active listings available.</div>';
     }
 
-    // Similar Products (Budget matched +- 500, compact mode 2x2 grid)
     const similarContainer = document.getElementById('similar-grid');
     let pPriceVal = parseFloat((product.price || "").replace(/[^0-9.]/g, '')) || 0;
     
@@ -509,20 +581,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (p.id === product.id) return false;
       let otherPrice = parseFloat((p.price || "").replace(/[^0-9.]/g, '')) || 0;
       let priceDiff = Math.abs(otherPrice - pPriceVal);
-      // Try to find same category items within the price buffer
       return p.category === product.category && priceDiff <= 500;
     });
 
-    // If we don't have enough budget-matched category items, pad with general recent items
     if (similar.length < 4) {
       const others = products.filter(p => p.id !== product.id && !similar.includes(p));
       similar = [...similar, ...others];
     }
     
-    similar = similar.slice(0, 4); // Take exactly up to 4 for our 2x2 grid
+    similar = similar.slice(0, 4);
 
     if(similar.length > 0) {
-      // Send compact=true to our creation function
       similar.forEach(p => similarContainer.appendChild(createProductCard(p, true)));
     } else {
       similarContainer.innerHTML = '<span class="text-outline col-span-full">No other reviews yet.</span>';
