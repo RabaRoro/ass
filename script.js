@@ -19,34 +19,23 @@ let currentSha = null;
 
 async function fetchFromGitHub() {
   const conf = getGHConfig();
-  
-  // 1. If admin is logged in, try fetching from GitHub first to get the latest SHA
-  if (conf.owner && conf.repo) {
-    try {
-      const res = await fetch(`https://api.github.com/repos/${conf.owner}/${conf.repo}/contents/${DB_FILE}`, {
-        headers: conf.pat ? { 'Authorization': `token ${conf.pat}`, 'Accept': 'application/vnd.github.v3+json' } : { 'Accept': 'application/vnd.github.v3+json' }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        currentSha = data.sha;
-        return JSON.parse(base64ToUtf8(data.content));
-      }
-    } catch (err) {
-      console.warn("GitHub fetch failed, attempting local fallback...");
-    }
-  }
+  if (!conf.owner || !conf.repo) return [];
 
-  // 2. PUBLIC VISITOR FALLBACK: Fetch the local catalog.json file
   try {
-    const localRes = await fetch(`./${DB_FILE}`);
-    if (localRes.ok) {
-      return await localRes.json();
-    }
+    const res = await fetch(`https://api.github.com/repos/${conf.owner}/${conf.repo}/contents/${DB_FILE}`, {
+      headers: conf.pat ? { 'Authorization': `token ${conf.pat}`, 'Accept': 'application/vnd.github.v3+json' } : { 'Accept': 'application/vnd.github.v3+json' }
+    });
+    
+    if (res.status === 404) return [];
+    if (!res.ok) throw new Error("GitHub fetch failed");
+    
+    const data = await res.json();
+    currentSha = data.sha;
+    return JSON.parse(base64ToUtf8(data.content));
   } catch (err) {
-    console.error("Local catalog fetch failed:", err);
+    console.error(err);
+    return [];
   }
-
-  return [];
 }
 
 async function saveToGitHub(productsArray) {
@@ -113,97 +102,55 @@ function parseDataList(dataStr) {
   return obj;
 }
 
-function parseNumberFromPrice(priceStr) {
-  if (!priceStr) return 0;
-  const match = priceStr.match(/[\d,.]+/);
-  return match ? parseFloat(match[0].replace(/,/g, '')) : 0;
-}
+function createProductCard(p, compact = false) {
+  let slug = p.name.toLowerCase().replace(/\s+/g, '-');
+  const card = document.createElement('div');
+  card.className = "group relative bg-surface-container-low rounded-xl overflow-hidden transition-all duration-500 hover:translate-y-[-4px] border border-white/5 hover:border-primary/30 flex flex-col cursor-pointer";
+  card.onclick = () => window.location.href = `product.html?slug=${slug}`;
+  
+  let badgeHTML = p.hotDeal ? `<span class="bg-primary text-on-primary-fixed text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-xl mr-1 mb-1 inline-block">Top Pick</span>` : '';
+  
+  let aspectClass = compact ? 'aspect-[16/9]' : 'aspect-[4/5]';
+  let titleClass = compact ? 'text-sm' : 'text-xl';
+  let paddingClass = compact ? 'p-4' : 'p-6';
+  let descClass = compact ? 'hidden' : 'text-sm text-outline mb-4 line-clamp-2';
 
-function calculateFinalScore(product) {
-  const subscores = parseDataList(product.subScores);
-  const keys = Object.keys(subscores);
-  if (keys.length > 0) {
-    let sum = 0, count = 0;
-    keys.forEach(k => {
-      const valStr = subscores[k].toString().replace('/10', '').trim();
-      const num = parseFloat(valStr);
-      if (!isNaN(num)) { sum += num; count++; }
-    });
-    if (count > 0) return (sum / count).toFixed(1);
-  }
-  return product.score || "N/A";
+  card.innerHTML = `
+    <div class="${aspectClass} bg-surface-container-lowest relative overflow-hidden flex-shrink-0">
+      <img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" src="${p.images?.[0] || 'logo.png'}" alt="${p.name}">
+      <div class="absolute top-3 left-3 right-3 flex flex-wrap z-10">${badgeHTML}</div>
+      <div class="absolute bottom-2 right-2 bg-surface-bright/90 backdrop-blur-md rounded-full px-2 py-0.5 flex items-center justify-center text-primary shadow-2xl z-20 font-bold text-xs">
+        <span class="material-symbols-outlined text-xs mr-1">star</span> ${p.score || 'N/A'}
+      </div>
+    </div>
+    <div class="${paddingClass} flex-1 flex flex-col justify-between">
+      <div>
+        <div class="flex justify-between items-start gap-2 mb-1">
+           <h3 class="${titleClass} font-bold tracking-tight line-clamp-2">${p.name}</h3>
+        </div>
+        ${!compact && p.price ? `<div class="text-primary font-mono text-sm mb-2">${p.price}</div>` : ''}
+        ${compact && p.price ? `<div class="text-primary font-mono text-xs mb-1">${p.price}</div>` : ''}
+        <p class="${descClass}">${p.description || p.metaDescription || 'Detailed review available.'}</p>
+      </div>
+      ${!compact && p.category ? `<div class="flex gap-2 mt-auto"><span class="bg-surface-container-highest text-[10px] text-on-surface-variant font-bold px-3 py-1 rounded-full truncate">${p.category}</span></div>` : ''}
+    </div>
+  `;
+  return card;
 }
 
 function generateStarsHTML(scoreNum) {
-  const numericScore = parseFloat(scoreNum) || 0;
-  const s = numericScore / 2;
+  const s = parseFloat(scoreNum || 0) / 2;
   let html = '';
   for(let i=1; i<=5; i++) {
     if (s >= i) html += `<span class="material-symbols-outlined text-yellow-400" style="font-variation-settings: 'FILL' 1;">star</span>`;
-    else if (s >= i - 0.5) html += `<span class="material-symbols-outlined text-yellow-400" style="font-variation-settings: 'FILL' 1;">star_half</span>`;
+    else if (s >= i - 0.5) html += `<span class="material-symbols-outlined text-yellow-400" style="font-variation-settings: 'FILL' 1;">star_half</span>`; 
     else html += `<span class="material-symbols-outlined text-yellow-400/30">star</span>`;
   }
-  html += `<span class="text-on-surface font-bold text-xl ml-2 font-mono">${numericScore}/10</span>`;
+  html += `<span class="text-on-surface font-bold text-xl ml-2 font-mono">${scoreNum}/10</span>`;
   return html;
 }
 
-function createProductCard(p) {
-  let slug = p.name.toLowerCase().replace(/\s+/g, '-');
-  const displayScore = calculateFinalScore(p);
-  
-  const card = document.createElement('div');
-  card.className = "group relative bg-surface-container-low rounded-xl overflow-hidden transition-all duration-500 hover:translate-y-[-8px] border border-white/5 hover:border-primary/30 flex flex-col cursor-pointer";
-  card.onclick = () => window.location.href = `product.html?slug=${slug}`;
-  
-  let badgeHTML = p.hotDeal ? `<span class="bg-primary text-on-primary-fixed text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-xl mr-1 mb-1 inline-block">Top Pick</span>` : '';
-  
-  card.innerHTML = `
-    <div class="aspect-[4/5] bg-surface-container-lowest relative overflow-hidden flex-shrink-0">
-      <img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" src="${p.images?.[0] || 'logo.png'}" alt="${p.name}">
-      <div class="absolute top-4 left-4 right-4 flex flex-wrap z-10">${badgeHTML}</div>
-      <div class="absolute bottom-4 right-4 bg-surface-bright/90 backdrop-blur-md rounded-full px-3 py-1 flex items-center justify-center text-primary shadow-2xl z-20 font-bold text-sm">
-        <span class="material-symbols-outlined text-sm mr-1">star</span> ${displayScore}
-      </div>
-    </div>
-    <div class="p-6 flex-1 flex flex-col justify-between">
-      <div>
-        <div class="flex justify-between items-start gap-2 mb-2">
-           <h3 class="text-xl font-bold tracking-tight line-clamp-1">${p.name}</h3>
-           ${p.price ? `<span class="text-primary font-mono text-sm">${p.price}</span>` : ''}
-        </div>
-        <p class="text-sm text-outline mb-4 line-clamp-2">${p.description || p.metaDescription || 'Detailed review available.'}</p>
-      </div>
-      <div class="flex gap-2 mt-auto">
-        ${p.category ? `<span class="bg-surface-container-highest text-[10px] text-on-surface-variant font-bold px-3 py-1 rounded-full truncate">${p.category}</span>` : ''}
-      </div>
-    </div>
-  `;
-  return card;
-}
-
-function createCompactProductCard(p) {
-  let slug = p.name.toLowerCase().replace(/\s+/g, '-');
-  const displayScore = calculateFinalScore(p);
-
-  const card = document.createElement('div');
-  card.className = "group bg-surface-container-low rounded-xl p-3 border border-white/5 hover:border-primary/40 transition-all flex items-center gap-4 cursor-pointer";
-  card.onclick = () => window.location.href = `product.html?slug=${slug}`;
-
-  card.innerHTML = `
-    <img src="${p.images?.[0] || 'logo.png'}" class="w-20 h-20 object-cover rounded-lg bg-surface-container flex-shrink-0 grayscale group-hover:grayscale-0 transition-all">
-    <div class="flex-1 min-w-0">
-      <h4 class="font-bold text-sm text-on-surface truncate group-hover:text-primary transition-colors">${p.name}</h4>
-      <div class="text-xs text-primary font-mono mt-1">${p.price || ''}</div>
-      <div class="flex items-center gap-1 mt-2 text-xs text-yellow-400">
-        <span class="material-symbols-outlined text-sm">star</span>
-        <span class="font-bold font-mono text-on-surface">${displayScore}</span>
-      </div>
-    </div>
-  `;
-  return card;
-}
-
-// ====== PAGE ROUTERS (DOM Based Detection) ======
+// ====== PAGE ROUTERS ======
 document.addEventListener('DOMContentLoaded', async () => {
   
   // 1. ADMIN PAGE
@@ -218,19 +165,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       loadProducts().then(renderAdminList);
     }
 
-    // Auto-format double spaces into '|' for merchant and social URLs
-    ['p-merchants', 'p-author-socials'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener('input', function() {
-          if (this.value.includes('  ')) {
-            const start = this.selectionStart;
-            this.value = this.value.replace(/  /g, '|');
-            this.setSelectionRange(start - 1, start - 1);
-          }
-        });
+    // Auto-format double spaces into '|' for Textareas
+    const replaceDoubleSpace = function(e) {
+      if (this.value.includes('  ')) {
+        const start = this.selectionStart;
+        this.value = this.value.replace(/  /g, '|');
+        this.setSelectionRange(start - 1, start - 1);
       }
-    });
+    };
+    document.getElementById('p-merchants')?.addEventListener('input', replaceDoubleSpace);
+    document.getElementById('p-author-socials')?.addEventListener('input', replaceDoubleSpace);
 
     document.getElementById('login-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -267,12 +211,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       const btn = document.getElementById('submit-btn');
       btn.innerHTML = `Saving...`;
       
+      // Auto-Score logic
+      let finalScore = document.getElementById('p-score').value.trim();
+      const subScoresText = document.getElementById('p-subscores').value.trim();
+      const parsedSub = parseDataList(subScoresText);
+      const sKeys = Object.keys(parsedSub);
+      if(sKeys.length > 0) {
+        let sum = 0, count = 0;
+        sKeys.forEach(k => {
+           let val = parseFloat(parsedSub[k].split('/')[0]);
+           if(!isNaN(val)) { sum += val; count++; }
+        });
+        if(count > 0) finalScore = (sum / count).toFixed(1);
+      }
+      
+      // Fallback if completely empty
+      if(!finalScore) finalScore = "0";
+
       const product = {
         id: editId || Date.now().toString(),
         name: document.getElementById('p-name').value.trim(),
         category: document.getElementById('p-category').value,
         price: document.getElementById('p-price').value.trim(),
-        score: document.getElementById('p-score').value.trim(),
+        score: finalScore,
         pros: document.getElementById('p-pros').value.split('\n').filter(Boolean),
         cons: document.getElementById('p-cons').value.split('\n').filter(Boolean),
         verdict: document.getElementById('p-verdict').value.trim(),
@@ -284,8 +245,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         images: [document.getElementById('p-images').value.trim()].filter(Boolean),
         merchants: document.getElementById('p-merchants').value.split('\n').map(u=>u.trim()).filter(Boolean),
         authorName: document.getElementById('p-author-name').value.trim(),
-        authorImg: document.getElementById('p-author-img')?.value.trim() || '',
-        authorSocials: document.getElementById('p-author-socials')?.value.split('\n').map(s=>s.trim()).filter(Boolean) || [],
+        authorImage: document.getElementById('p-author-image').value.trim(),
+        authorSocials: document.getElementById('p-author-socials').value.split('\n').map(u=>u.trim()).filter(Boolean),
         hotDeal: document.getElementById('p-hot').checked,
         timestamp: Date.now()
       };
@@ -317,7 +278,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="flex items-center gap-4">
             <img src="${p.images?.[0] || 'logo.png'}" class="w-12 h-12 object-cover rounded bg-surface-container">
             <div>
-              <div class="font-bold text-sm">${p.name} <span class="text-primary text-xs ml-2">Score: ${calculateFinalScore(p)}/10</span></div>
+              <div class="font-bold text-sm">${p.name} <span class="text-primary text-xs ml-2">Score: ${p.score}/10</span></div>
               <div class="text-xs text-outline">${p.category}</div>
             </div>
           </div>
@@ -345,10 +306,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           document.getElementById('p-images').value = p.images?.[0] || '';
           document.getElementById('p-merchants').value = (p.merchants || []).join('\n');
           document.getElementById('p-author-name').value = p.authorName || '';
+          document.getElementById('p-author-image').value = p.authorImage || '';
+          document.getElementById('p-author-socials').value = (p.authorSocials || []).join('\n');
           
-          if(document.getElementById('p-author-img')) document.getElementById('p-author-img').value = p.authorImg || '';
-          if(document.getElementById('p-author-socials')) document.getElementById('p-author-socials').value = (p.authorSocials || []).join('\n');
-          
+          // Backwards compatibility for legacy author url
+          if (!p.authorSocials && p.authorUrl) {
+              document.getElementById('p-author-socials').value = `Link|${p.authorUrl}`;
+          }
+
           document.getElementById('p-hot').checked = p.hotDeal || false;
           document.getElementById('tab-add').click();
           window.scrollTo(0,0);
@@ -418,11 +383,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const calculatedScore = calculateFinalScore(product);
-
     document.title = product.name + " Review | The Geek Shop";
     document.getElementById('product-name').textContent = product.name;
-    document.getElementById('product-score-stars').innerHTML = generateStarsHTML(calculatedScore);
+    document.getElementById('product-score-stars').innerHTML = generateStarsHTML(product.score);
     document.getElementById('product-price').textContent = product.price || '';
     document.getElementById('product-meta-desc').textContent = product.metaDescription || product.description;
     document.getElementById('product-detailed-desc').innerHTML = product.detailedDescription || "No detailed review provided.";
@@ -445,24 +408,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       specsGrid.innerHTML = `<span class="text-outline">No specs provided.</span>`;
     }
 
-    // Build Circular SVG Sub-scores Block (NEW UPDATE)
+    // Build Epic Games-style Circular Sub-scores
     const subscores = parseDataList(product.subScores);
     const subscoresGrid = document.getElementById('subscores-grid');
     if (Object.keys(subscores).length > 0) {
       document.getElementById('subscores-wrapper').classList.remove('hidden');
       subscoresGrid.innerHTML = Object.entries(subscores).map(([k, v]) => {
-        const numVal = parseFloat(v.toString().replace('/10','')) || 0;
-        const dashOffset = 100 - (numVal * 10);
+        let numVal = parseFloat(v.split('/')[0]);
+        let percentage = isNaN(numVal) ? 0 : (numVal / 10) * 100;
+        
         return `
-          <div class="bg-surface-container-low border border-white/5 p-4 rounded-xl flex flex-col items-center justify-center text-center space-y-3">
-            <div class="relative w-16 h-16 flex items-center justify-center">
+          <div class="flex flex-col items-center gap-3 bg-surface-container-low p-5 rounded-2xl border border-white/5 w-[140px] shadow-xl hover:-translate-y-1 transition-transform">
+            <div class="relative w-16 h-16">
               <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                 <path class="text-surface-variant" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                <path class="text-primary" stroke-width="3.5" stroke-dasharray="100" stroke-dashoffset="${dashOffset}" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path class="text-primary" stroke-dasharray="${percentage}, 100" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
               </svg>
-              <span class="absolute font-mono font-bold text-sm text-on-surface">${numVal}</span>
+              <div class="absolute inset-0 flex items-center justify-center font-display font-bold text-xl text-on-surface">${numVal}</div>
             </div>
-            <span class="text-[11px] font-bold uppercase tracking-wider text-outline truncate w-full">${k}</span>
+            <span class="text-outline font-bold text-xs uppercase tracking-widest text-center leading-tight">${k}</span>
           </div>
         `;
       }).join('');
@@ -484,7 +448,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       proConSection.innerHTML = html;
     }
 
-    // Final Verdict & Author Box (NEW UPDATE)
+    // Final Verdict
     const verdictContainer = document.getElementById('verdict-container');
     if (product.verdict) {
       verdictContainer.innerHTML = `
@@ -494,25 +458,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>`;
     }
     
+    // Author Box Expanded capabilities
     const authorContainer = document.getElementById('author-container');
     if (product.authorName) {
-      let avatarHTML = product.authorImg 
-        ? `<img src="${product.authorImg}" class="w-16 h-16 rounded-full object-cover mb-3 border border-primary/30">`
-        : `<div class="w-16 h-16 bg-surface-variant rounded-full mb-3 flex items-center justify-center text-primary text-2xl font-bold font-display uppercase border border-primary/20">${product.authorName.charAt(0)}</div>`;
-
       let socialsHTML = '';
       if (product.authorSocials && product.authorSocials.length > 0) {
-        socialsHTML = `<div class="flex flex-wrap gap-2 justify-center mt-3">` + product.authorSocials.map(s => {
-          const parts = s.split('|');
-          return `<a href="${parts[1] || '#'}" target="_blank" class="text-xs bg-surface-container hover:bg-surface-variant text-primary border border-primary/20 px-3 py-1 rounded-full transition-all">${parts[0] || 'Social'}</a>`;
-        }).join('') + `</div>`;
+         socialsHTML = `<div class="flex flex-wrap justify-center gap-2 mt-4">` +
+         product.authorSocials.map(s => {
+           const pts = s.split('|');
+           return `<a href="${pts[1] || '#'}" target="_blank" class="text-[10px] font-bold text-primary hover:text-white hover:bg-primary/20 uppercase tracking-widest bg-primary/10 px-3 py-1.5 rounded-full transition-colors">${pts[0] || 'Link'}</a>`;
+         }).join('') + `</div>`;
+      } else if (product.authorUrl) {
+         socialsHTML = `<div class="flex justify-center mt-4"><a href="${product.authorUrl}" target="_blank" class="text-xs font-bold text-primary hover:underline uppercase tracking-widest">Follow Author</a></div>`;
       }
 
+      let avatarHTML = product.authorImage ?
+        `<img src="${product.authorImage}" class="w-20 h-20 rounded-full object-cover mb-3 border-2 border-primary/20 shadow-xl">` :
+        `<div class="w-20 h-20 bg-surface-variant rounded-full mb-3 flex items-center justify-center text-primary text-3xl font-bold font-display uppercase border-2 border-primary/20 shadow-xl">${product.authorName.charAt(0)}</div>`;
+
       authorContainer.innerHTML = `
-        <div class="bg-surface-container-low rounded-2xl p-6 border border-white/5 h-full flex flex-col justify-center items-center text-center">
+        <div class="bg-surface-container-low rounded-2xl p-8 border border-white/5 h-full flex flex-col justify-center items-center text-center">
           ${avatarHTML}
-          <p class="text-[10px] uppercase tracking-widest text-outline">Reviewed By</p>
-          <h4 class="text-lg font-bold text-on-surface mb-1">${product.authorName}</h4>
+          <p class="text-[10px] uppercase tracking-widest text-outline mb-1">Reviewed By</p>
+          <h4 class="text-lg font-bold text-on-surface">${product.authorName}</h4>
           ${socialsHTML}
         </div>`;
     }
@@ -533,30 +501,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       orderRow.innerHTML = '<div class="px-4 py-2 bg-surface-container rounded-lg text-outline text-sm border border-white/5">No active listings available.</div>';
     }
 
-    // Inject 4 Similar Products Based on Price (NEW UPDATE)
+    // Similar Products (Budget matched +- 500, compact mode 2x2 grid)
     const similarContainer = document.getElementById('similar-grid');
-    const currentPriceNum = parseNumberFromPrice(product.price);
+    let pPriceVal = parseFloat((product.price || "").replace(/[^0-9.]/g, '')) || 0;
     
     let similar = products.filter(p => {
       if (p.id === product.id) return false;
-      const pPriceNum = parseNumberFromPrice(p.price);
-      if (!currentPriceNum || !pPriceNum) return p.category === product.category;
-      
-      const diff = Math.abs(pPriceNum - currentPriceNum);
-      return diff <= 500; // Returns items within a +/- 500 price range
+      let otherPrice = parseFloat((p.price || "").replace(/[^0-9.]/g, '')) || 0;
+      let priceDiff = Math.abs(otherPrice - pPriceVal);
+      // Try to find same category items within the price buffer
+      return p.category === product.category && priceDiff <= 500;
     });
 
+    // If we don't have enough budget-matched category items, pad with general recent items
     if (similar.length < 4) {
-      const remaining = products.filter(p => p.id !== product.id && !similar.includes(p));
-      similar = [...similar, ...remaining];
+      const others = products.filter(p => p.id !== product.id && !similar.includes(p));
+      similar = [...similar, ...others];
     }
+    
+    similar = similar.slice(0, 4); // Take exactly up to 4 for our 2x2 grid
 
-    similar = similar.slice(0, 4);
     if(similar.length > 0) {
-      // Uses the new compact cards instead of massive full cards
-      similar.forEach(p => similarContainer.appendChild(createCompactProductCard(p)));
+      // Send compact=true to our creation function
+      similar.forEach(p => similarContainer.appendChild(createProductCard(p, true)));
     } else {
-      similarContainer.innerHTML = '<span class="text-outline">No similar products found within price range.</span>';
+      similarContainer.innerHTML = '<span class="text-outline col-span-full">No other reviews yet.</span>';
     }
   }
 });
