@@ -10,12 +10,20 @@
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   
   <script id="tailwind-config">
-    tailwind.config = { darkMode: "class", theme: { extend: { colors: {
-      "primary-fixed-dim": "#dbb8ff", "background": "#0c1322", "surface-container-lowest": "#070e1d", "surface-container": "#191f2f",
-      "on-surface": "#dce2f7", "surface-variant": "#2e3545", "surface": "#0c1322", "surface-container-low": "#141b2b",
-      "outline": "#968e9a", "on-surface-variant": "#cdc3d0", "primary-fixed": "#efdbff", "surface-container-high": "#232a3a",
-      "primary": "#ecd7ff", "outline-variant": "#4a454f"
-    }, fontFamily: { "display": ["Space Grotesk"], "body": ["Inter"] } } } }
+    tailwind.config = { 
+      darkMode: "class", 
+      theme: { 
+        extend: { 
+          colors: {
+            "primary-fixed-dim": "#dbb8ff", "background": "#0c1322", "surface-container-lowest": "#070e1d", "surface-container": "#191f2f",
+            "on-surface": "#dce2f7", "surface-variant": "#2e3545", "surface": "#0c1322", "surface-container-low": "#141b2b",
+            "outline": "#968e9a", "on-surface-variant": "#cdc3d0", "primary-fixed": "#efdbff", "surface-container-high": "#232a3a",
+            "primary": "#ecd7ff", "outline-variant": "#4a454f"
+          }, 
+          fontFamily: { "display": ["Space Grotesk"], "body": ["Inter"] } 
+        } 
+      } 
+    }
   </script>
   <style>
     .kinetic-grid { background-image: linear-gradient(to right, rgba(236, 215, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(236, 215, 255, 0.03) 1px, transparent 1px); background-size: 40px 40px; }
@@ -38,7 +46,7 @@
   <main class="relative kinetic-grid min-h-screen pb-20">
     
     <!-- Hero / Top Section -->
-    <section class="max-w-screen-2xl mx-auto px-8 py-12 lg:py-20 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
+    <section class="max-w-screen-2xl mx-auto px-8 py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
       
       <!-- Single Large Image (Left) -->
       <div class="lg:col-span-7">
@@ -47,7 +55,7 @@
         </div>
       </div>
 
-      <!-- Core Details (Right) No Box -->
+      <!-- Core Details (Right) -->
       <div class="lg:col-span-5 flex flex-col justify-center space-y-6">
         <h1 id="product-name" class="text-4xl lg:text-5xl font-display font-bold tracking-tighter text-on-surface"></h1>
         
@@ -60,7 +68,7 @@
         <p id="product-meta-desc" class="text-on-surface-variant text-lg leading-relaxed pt-2"></p>
         
         <!-- Buy Links Flex Container -->
-        <div class="pt-6">
+        <div class="pt-4">
           <h4 class="text-xs font-bold uppercase tracking-widest text-outline mb-3">Buy Here:</h4>
           <div id="order-row" class="flex flex-wrap gap-3"></div>
         </div>
@@ -68,7 +76,7 @@
     </section>
 
     <!-- Details Section -->
-    <section class="max-w-screen-2xl mx-auto px-8 py-12">
+    <section class="max-w-screen-2xl mx-auto px-8 py-8">
       <!-- 1. Overview & Specs -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16">
         <div class="lg:col-span-8 space-y-6">
@@ -87,35 +95,47 @@
       <!-- 2. Pros & Cons -->
       <div id="pros-cons-section" class="mb-16"></div>
 
-      <!-- 3. Dynamic Sub-Scores -->
+      <!-- 3. Epic Games Style Sub-Scores -->
       <div id="subscores-wrapper" class="hidden mb-16">
-        <h2 class="text-2xl font-display font-bold tracking-tight text-primary mb-6">Detailed Scoring</h2>
-        <div id="subscores-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        <h2 class="text-2xl font-display font-bold tracking-tight text-primary mb-6">Detailed Ratings</h2>
+        <div id="subscores-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"></div>
       </div>
 
       <!-- 4. Verdict & Author Box -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-20">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
         <div class="lg:col-span-8" id="verdict-container"></div>
         <div class="lg:col-span-4" id="author-container"></div>
       </div>
 
-      <!-- 5. Similar Products & Advertisement -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 border-t border-outline-variant/10 pt-16 mt-8">
+      <!-- 5. Similar Products & Fixed Ad Box -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 border-t border-outline-variant/10 pt-16">
         
-        <!-- Similar Grid -->
+        <!-- Similar Products Grid (Compact 2x2) -->
         <div class="lg:col-span-8">
-          <h2 class="text-2xl font-display font-bold mb-6">Similar Products</h2>
-          <div id="similar-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-display font-bold">Similar Products</h2>
+            <span class="text-xs text-outline uppercase tracking-widest">Within Price Range</span>
+          </div>
+          <div id="similar-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
-        <!-- Ad Box -->
-        <div class="lg:col-span-4">
-          <a href="https://thegeekshop.com" target="_blank" class="block h-full bg-gradient-to-br from-purple-900/30 to-surface-container rounded-2xl border border-primary/20 hover:border-primary transition-all p-8 flex flex-col items-center justify-center text-center group shadow-2xl relative overflow-hidden">
-            <div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <span class="material-symbols-outlined text-5xl text-primary mb-4 group-hover:scale-110 group-hover:-translate-y-1 transition-transform duration-300">shopping_bag</span>
-            <h3 class="text-xl font-display font-bold text-on-surface mb-2 relative z-10">Need keyboard related accessories?</h3>
-            <span class="text-primary font-bold tracking-widest uppercase text-xs group-hover:underline relative z-10 mt-2">Visit TheGeekShop</span>
-          </a>
+        <!-- Fixed Size Advertisement -->
+        <div class="lg:col-span-4 flex justify-center items-start">
+          <div class="w-full min-h-[340px] max-h-[380px] bg-gradient-to-br from-purple-950/40 via-surface-container to-surface-container-low rounded-2xl border border-primary/20 hover:border-primary/50 transition-all p-8 flex flex-col items-center justify-between text-center group shadow-2xl relative overflow-hidden">
+            <div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+            
+            <span class="material-symbols-outlined text-6xl text-primary group-hover:scale-110 transition-transform duration-300">keyboard</span>
+            
+            <div class="space-y-2 z-10">
+              <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/80 bg-primary/10 px-3 py-1 rounded-full inline-block">Official Store</span>
+              <h3 class="text-xl font-display font-bold text-on-surface">Need keyboard related accessories?</h3>
+              <p class="text-xs text-on-surface-variant">Visit the geekshop for custom caps, switches & lubes.</p>
+            </div>
+
+            <a href="https://thegeekshop.com" target="_blank" class="w-full py-3 bg-primary text-on-primary-fixed font-bold tracking-widest uppercase text-xs rounded-xl shadow-lg hover:brightness-110 transition-all z-10 block">
+              Visit TheGeekShop
+            </a>
+          </div>
         </div>
       </div>
     </section>
