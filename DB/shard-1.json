@@ -1,0 +1,34 @@
+[
+  {
+    "id": "1789213053810",
+    "name": "lala",
+    "category": "Keyboards",
+    "price": "11",
+    "score": "0",
+    "pros": [
+      "asdf"
+    ],
+    "cons": [
+      "asdf"
+    ],
+    "verdict": "asdf",
+    "description": "asdf",
+    "metaDescription": "asdf",
+    "detailedDescription": "asdf",
+    "specs": "asdf",
+    "subScores": "asdf",
+    "images": [
+      "asdf"
+    ],
+    "merchants": [
+      "asdf"
+    ],
+    "authorName": "asdf",
+    "authorImage": "asdf",
+    "authorSocials": [
+      "asdf"
+    ],
+    "hotDeal": true,
+    "timestamp": 1789213053810
+  }
+]
