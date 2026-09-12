@@ -1,18 +1,5 @@
 [
   {
-    "id": "1789213053810",
-    "slug": "lala",
-    "name": "lala",
-    "category": "Keyboards",
-    "price": "11",
-    "score": "0",
-    "image": "asdf",
-    "hotDeal": true,
-    "description": "asdf",
-    "specs": "asdf",
-    "shard": "shard-1.json"
-  },
-  {
     "id": "1789214032400",
     "slug": "aula-f75-pro",
     "name": "AULA F75 Pro",
