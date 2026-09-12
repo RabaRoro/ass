@@ -9,6 +9,7 @@ function getGHConfig() {
   };
 }
 
+// Base64 Helpers for UTF-8 support
 function utf8ToBase64(str) { return btoa(unescape(encodeURIComponent(str))); }
 function base64ToUtf8(str) { return decodeURIComponent(escape(atob(str))); }
 
@@ -18,23 +19,34 @@ let currentSha = null;
 
 async function fetchFromGitHub() {
   const conf = getGHConfig();
-  if (!conf.owner || !conf.repo) return [];
-
-  try {
-    const res = await fetch(`https://api.github.com/repos/${conf.owner}/${conf.repo}/contents/${DB_FILE}`, {
-      headers: conf.pat ? { 'Authorization': `token ${conf.pat}`, 'Accept': 'application/vnd.github.v3+json' } : { 'Accept': 'application/vnd.github.v3+json' }
-    });
-    
-    if (res.status === 404) return [];
-    if (!res.ok) throw new Error("GitHub fetch failed");
-    
-    const data = await res.json();
-    currentSha = data.sha;
-    return JSON.parse(base64ToUtf8(data.content));
-  } catch (err) {
-    console.error(err);
-    return [];
+  
+  // 1. If admin is logged in, try fetching from GitHub first to get the latest SHA
+  if (conf.owner && conf.repo) {
+    try {
+      const res = await fetch(`https://api.github.com/repos/${conf.owner}/${conf.repo}/contents/${DB_FILE}`, {
+        headers: conf.pat ? { 'Authorization': `token ${conf.pat}`, 'Accept': 'application/vnd.github.v3+json' } : { 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        currentSha = data.sha;
+        return JSON.parse(base64ToUtf8(data.content));
+      }
+    } catch (err) {
+      console.warn("GitHub fetch failed, attempting local fallback...");
+    }
   }
+
+  // 2. PUBLIC VISITOR FALLBACK: Fetch the local catalog.json file
+  try {
+    const localRes = await fetch(`./${DB_FILE}`);
+    if (localRes.ok) {
+      return await localRes.json();
+    }
+  } catch (err) {
+    console.error("Local catalog fetch failed:", err);
+  }
+
+  return [];
 }
 
 async function saveToGitHub(productsArray) {
@@ -107,7 +119,6 @@ function parseNumberFromPrice(priceStr) {
   return match ? parseFloat(match[0].replace(/,/g, '')) : 0;
 }
 
-// Automatic score calculation from sub-scores
 function calculateFinalScore(product) {
   const subscores = parseDataList(product.subScores);
   const keys = Object.keys(subscores);
@@ -116,10 +127,7 @@ function calculateFinalScore(product) {
     keys.forEach(k => {
       const valStr = subscores[k].toString().replace('/10', '').trim();
       const num = parseFloat(valStr);
-      if (!isNaN(num)) {
-        sum += num;
-        count++;
-      }
+      if (!isNaN(num)) { sum += num; count++; }
     });
     if (count > 0) return (sum / count).toFixed(1);
   }
@@ -142,7 +150,7 @@ function generateStarsHTML(scoreNum) {
 function createProductCard(p) {
   let slug = p.name.toLowerCase().replace(/\s+/g, '-');
   const displayScore = calculateFinalScore(p);
-
+  
   const card = document.createElement('div');
   card.className = "group relative bg-surface-container-low rounded-xl overflow-hidden transition-all duration-500 hover:translate-y-[-8px] border border-white/5 hover:border-primary/30 flex flex-col cursor-pointer";
   card.onclick = () => window.location.href = `product.html?slug=${slug}`;
@@ -173,7 +181,6 @@ function createProductCard(p) {
   return card;
 }
 
-// Compact Cards for Similar Products
 function createCompactProductCard(p) {
   let slug = p.name.toLowerCase().replace(/\s+/g, '-');
   const displayScore = calculateFinalScore(p);
@@ -196,7 +203,7 @@ function createCompactProductCard(p) {
   return card;
 }
 
-// ====== ROUTERS ======
+// ====== PAGE ROUTERS (DOM Based Detection) ======
 document.addEventListener('DOMContentLoaded', async () => {
   
   // 1. ADMIN PAGE
@@ -211,7 +218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       loadProducts().then(renderAdminList);
     }
 
-    // Auto-format double spaces into '|' for Merchants & Author Socials
+    // Auto-format double spaces into '|' for merchant and social URLs
     ['p-merchants', 'p-author-socials'].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
@@ -277,8 +284,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         images: [document.getElementById('p-images').value.trim()].filter(Boolean),
         merchants: document.getElementById('p-merchants').value.split('\n').map(u=>u.trim()).filter(Boolean),
         authorName: document.getElementById('p-author-name').value.trim(),
-        authorImg: document.getElementById('p-author-img').value.trim(),
-        authorSocials: document.getElementById('p-author-socials').value.split('\n').map(s=>s.trim()).filter(Boolean),
+        authorImg: document.getElementById('p-author-img')?.value.trim() || '',
+        authorSocials: document.getElementById('p-author-socials')?.value.split('\n').map(s=>s.trim()).filter(Boolean) || [],
         hotDeal: document.getElementById('p-hot').checked,
         timestamp: Date.now()
       };
@@ -289,7 +296,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         else products.push(product);
         
         await saveToGitHub(products);
-        showToast("Review saved successfully!");
+        showToast("Review published successfully!");
         document.getElementById('product-form').reset();
         editId = null;
         document.getElementById('form-title').innerText = "Post New Review";
@@ -311,7 +318,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <img src="${p.images?.[0] || 'logo.png'}" class="w-12 h-12 object-cover rounded bg-surface-container">
             <div>
               <div class="font-bold text-sm">${p.name} <span class="text-primary text-xs ml-2">Score: ${calculateFinalScore(p)}/10</span></div>
-              <div class="text-xs text-outline">${p.category || 'Uncategorized'}</div>
+              <div class="text-xs text-outline">${p.category}</div>
             </div>
           </div>
           <div class="flex gap-2">
@@ -338,8 +345,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           document.getElementById('p-images').value = p.images?.[0] || '';
           document.getElementById('p-merchants').value = (p.merchants || []).join('\n');
           document.getElementById('p-author-name').value = p.authorName || '';
-          document.getElementById('p-author-img').value = p.authorImg || '';
-          document.getElementById('p-author-socials').value = (p.authorSocials || []).join('\n');
+          
+          if(document.getElementById('p-author-img')) document.getElementById('p-author-img').value = p.authorImg || '';
+          if(document.getElementById('p-author-socials')) document.getElementById('p-author-socials').value = (p.authorSocials || []).join('\n');
+          
           document.getElementById('p-hot').checked = p.hotDeal || false;
           document.getElementById('tab-add').click();
           window.scrollTo(0,0);
@@ -362,7 +371,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 2. SINGLE PRODUCT PAGE
+  // 2. HOME PAGE (INDEX)
+  if (document.getElementById('interest-products')) {
+    const products = await loadProducts();
+    const container = document.getElementById('interest-products');
+    container.innerHTML = '';
+    if (!products.length) container.innerHTML = `<div class="col-span-full py-12 text-center text-outline">No reviews yet. Admin needs to publish some.</div>`;
+    else shuffle(products).slice(0, 8).forEach(p => container.appendChild(createProductCard(p)));
+  }
+
+  // 3. CATALOG PAGE (PRODUCTS)
+  if (document.getElementById('products-grid')) {
+    const container = document.getElementById('products-grid');
+    const searchInput = document.getElementById('search-input');
+    const products = await loadProducts();
+    
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('search') && searchInput) searchInput.value = params.get('search');
+
+    function renderGrid() {
+      let result = [...products].reverse();
+      if (searchInput && searchInput.value) {
+        const q = searchInput.value.toLowerCase();
+        result = result.filter(p => p.name.toLowerCase().includes(q));
+      }
+      container.innerHTML = '';
+      if (!result.length) container.innerHTML = `<div class="col-span-full text-center py-12 text-outline bg-surface-container-low rounded-xl">No reviews found.</div>`;
+      else result.forEach(p => container.appendChild(createProductCard(p)));
+    }
+    
+    if (searchInput) searchInput.addEventListener('input', renderGrid);
+    renderGrid();
+  }
+
+  // 4. SINGLE PRODUCT PAGE
   if (document.getElementById('product-name')) {
     const urlParams = new URLSearchParams(window.location.search);
     const slug = urlParams.get('slug');
@@ -389,7 +431,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('main-image').src = product.images[0];
     }
 
-    // Specs Block
+    // Build Specifications Block
     const specs = parseDataList(product.specs);
     const specsGrid = document.getElementById('product-specs-grid');
     if (Object.keys(specs).length > 0) {
@@ -403,7 +445,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       specsGrid.innerHTML = `<span class="text-outline">No specs provided.</span>`;
     }
 
-    // Epic Games Style Circular Sub-Scores
+    // Build Circular SVG Sub-scores Block (NEW UPDATE)
     const subscores = parseDataList(product.subScores);
     const subscoresGrid = document.getElementById('subscores-grid');
     if (Object.keys(subscores).length > 0) {
@@ -426,7 +468,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }).join('');
     }
 
-    // Pros & Cons
+    // Build Pros & Cons
     const proConSection = document.getElementById('pros-cons-section');
     if (product.pros?.length || product.cons?.length) {
       let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">`;
@@ -442,7 +484,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       proConSection.innerHTML = html;
     }
 
-    // Verdict & Author Box
+    // Final Verdict & Author Box (NEW UPDATE)
     const verdictContainer = document.getElementById('verdict-container');
     if (product.verdict) {
       verdictContainer.innerHTML = `
@@ -475,7 +517,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>`;
     }
 
-    // Buy Links (Side by Side)
+    // Side-by-side Merchant Links
     const orderRow = document.getElementById('order-row');
     if (product.merchants && product.merchants.length > 0) {
       orderRow.innerHTML = product.merchants.map(m => {
@@ -491,7 +533,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       orderRow.innerHTML = '<div class="px-4 py-2 bg-surface-container rounded-lg text-outline text-sm border border-white/5">No active listings available.</div>';
     }
 
-    // Similar Products (Filtered by price range +-100 to 500 BDT)
+    // Inject 4 Similar Products Based on Price (NEW UPDATE)
     const similarContainer = document.getElementById('similar-grid');
     const currentPriceNum = parseNumberFromPrice(product.price);
     
@@ -501,7 +543,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!currentPriceNum || !pPriceNum) return p.category === product.category;
       
       const diff = Math.abs(pPriceNum - currentPriceNum);
-      return diff <= 500; // Within 100-500 price tolerance range
+      return diff <= 500; // Returns items within a +/- 500 price range
     });
 
     if (similar.length < 4) {
@@ -509,8 +551,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       similar = [...similar, ...remaining];
     }
 
-    similar = similar.slice(0, 4); // Keep exactly 4 compact items
+    similar = similar.slice(0, 4);
     if(similar.length > 0) {
+      // Uses the new compact cards instead of massive full cards
       similar.forEach(p => similarContainer.appendChild(createCompactProductCard(p)));
     } else {
       similarContainer.innerHTML = '<span class="text-outline">No similar products found within price range.</span>';
