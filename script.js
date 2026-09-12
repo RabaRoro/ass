@@ -9,7 +9,6 @@ function getGHConfig() {
   };
 }
 
-// Base64 Helpers for UTF-8 support
 function utf8ToBase64(str) { return btoa(unescape(encodeURIComponent(str))); }
 function base64ToUtf8(str) { return decodeURIComponent(escape(atob(str))); }
 
@@ -102,9 +101,48 @@ function parseDataList(dataStr) {
   return obj;
 }
 
+function parseNumberFromPrice(priceStr) {
+  if (!priceStr) return 0;
+  const match = priceStr.match(/[\d,.]+/);
+  return match ? parseFloat(match[0].replace(/,/g, '')) : 0;
+}
+
+// Automatic score calculation from sub-scores
+function calculateFinalScore(product) {
+  const subscores = parseDataList(product.subScores);
+  const keys = Object.keys(subscores);
+  if (keys.length > 0) {
+    let sum = 0, count = 0;
+    keys.forEach(k => {
+      const valStr = subscores[k].toString().replace('/10', '').trim();
+      const num = parseFloat(valStr);
+      if (!isNaN(num)) {
+        sum += num;
+        count++;
+      }
+    });
+    if (count > 0) return (sum / count).toFixed(1);
+  }
+  return product.score || "N/A";
+}
+
+function generateStarsHTML(scoreNum) {
+  const numericScore = parseFloat(scoreNum) || 0;
+  const s = numericScore / 2;
+  let html = '';
+  for(let i=1; i<=5; i++) {
+    if (s >= i) html += `<span class="material-symbols-outlined text-yellow-400" style="font-variation-settings: 'FILL' 1;">star</span>`;
+    else if (s >= i - 0.5) html += `<span class="material-symbols-outlined text-yellow-400" style="font-variation-settings: 'FILL' 1;">star_half</span>`;
+    else html += `<span class="material-symbols-outlined text-yellow-400/30">star</span>`;
+  }
+  html += `<span class="text-on-surface font-bold text-xl ml-2 font-mono">${numericScore}/10</span>`;
+  return html;
+}
+
 function createProductCard(p) {
   let slug = p.name.toLowerCase().replace(/\s+/g, '-');
-  
+  const displayScore = calculateFinalScore(p);
+
   const card = document.createElement('div');
   card.className = "group relative bg-surface-container-low rounded-xl overflow-hidden transition-all duration-500 hover:translate-y-[-8px] border border-white/5 hover:border-primary/30 flex flex-col cursor-pointer";
   card.onclick = () => window.location.href = `product.html?slug=${slug}`;
@@ -116,7 +154,7 @@ function createProductCard(p) {
       <img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" src="${p.images?.[0] || 'logo.png'}" alt="${p.name}">
       <div class="absolute top-4 left-4 right-4 flex flex-wrap z-10">${badgeHTML}</div>
       <div class="absolute bottom-4 right-4 bg-surface-bright/90 backdrop-blur-md rounded-full px-3 py-1 flex items-center justify-center text-primary shadow-2xl z-20 font-bold text-sm">
-        <span class="material-symbols-outlined text-sm mr-1">star</span> ${p.score || 'N/A'}
+        <span class="material-symbols-outlined text-sm mr-1">star</span> ${displayScore}
       </div>
     </div>
     <div class="p-6 flex-1 flex flex-col justify-between">
@@ -135,19 +173,30 @@ function createProductCard(p) {
   return card;
 }
 
-function generateStarsHTML(scoreNum) {
-  const s = parseFloat(scoreNum || 0) / 2;
-  let html = '';
-  for(let i=1; i<=5; i++) {
-    if (s >= i) html += `<span class="material-symbols-outlined text-yellow-400" style="font-variation-settings: 'FILL' 1;">star</span>`;
-    else if (s >= i - 0.5) html += `<span class="material-symbols-outlined text-yellow-400" style="font-variation-settings: 'FILL' 1;">star_half</span>`; // Uses half star if supported, else looks full or empty
-    else html += `<span class="material-symbols-outlined text-yellow-400/30">star</span>`;
-  }
-  html += `<span class="text-on-surface font-bold text-xl ml-2 font-mono">${scoreNum}/10</span>`;
-  return html;
+// Compact Cards for Similar Products
+function createCompactProductCard(p) {
+  let slug = p.name.toLowerCase().replace(/\s+/g, '-');
+  const displayScore = calculateFinalScore(p);
+
+  const card = document.createElement('div');
+  card.className = "group bg-surface-container-low rounded-xl p-3 border border-white/5 hover:border-primary/40 transition-all flex items-center gap-4 cursor-pointer";
+  card.onclick = () => window.location.href = `product.html?slug=${slug}`;
+
+  card.innerHTML = `
+    <img src="${p.images?.[0] || 'logo.png'}" class="w-20 h-20 object-cover rounded-lg bg-surface-container flex-shrink-0 grayscale group-hover:grayscale-0 transition-all">
+    <div class="flex-1 min-w-0">
+      <h4 class="font-bold text-sm text-on-surface truncate group-hover:text-primary transition-colors">${p.name}</h4>
+      <div class="text-xs text-primary font-mono mt-1">${p.price || ''}</div>
+      <div class="flex items-center gap-1 mt-2 text-xs text-yellow-400">
+        <span class="material-symbols-outlined text-sm">star</span>
+        <span class="font-bold font-mono text-on-surface">${displayScore}</span>
+      </div>
+    </div>
+  `;
+  return card;
 }
 
-// ====== PAGE ROUTERS (DOM Based Detection) ======
+// ====== ROUTERS ======
 document.addEventListener('DOMContentLoaded', async () => {
   
   // 1. ADMIN PAGE
@@ -162,12 +211,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       loadProducts().then(renderAdminList);
     }
 
-    // Auto-format double spaces into '|' for merchant URLs
-    document.getElementById('p-merchants').addEventListener('input', function(e) {
-      if (this.value.includes('  ')) {
-        const start = this.selectionStart;
-        this.value = this.value.replace(/  /g, '|');
-        this.setSelectionRange(start - 1, start - 1);
+    // Auto-format double spaces into '|' for Merchants & Author Socials
+    ['p-merchants', 'p-author-socials'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', function() {
+          if (this.value.includes('  ')) {
+            const start = this.selectionStart;
+            this.value = this.value.replace(/  /g, '|');
+            this.setSelectionRange(start - 1, start - 1);
+          }
+        });
       }
     });
 
@@ -223,7 +277,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         images: [document.getElementById('p-images').value.trim()].filter(Boolean),
         merchants: document.getElementById('p-merchants').value.split('\n').map(u=>u.trim()).filter(Boolean),
         authorName: document.getElementById('p-author-name').value.trim(),
-        authorUrl: document.getElementById('p-author-url').value.trim(),
+        authorImg: document.getElementById('p-author-img').value.trim(),
+        authorSocials: document.getElementById('p-author-socials').value.split('\n').map(s=>s.trim()).filter(Boolean),
         hotDeal: document.getElementById('p-hot').checked,
         timestamp: Date.now()
       };
@@ -234,7 +289,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         else products.push(product);
         
         await saveToGitHub(products);
-        showToast("Review published successfully!");
+        showToast("Review saved successfully!");
         document.getElementById('product-form').reset();
         editId = null;
         document.getElementById('form-title').innerText = "Post New Review";
@@ -255,8 +310,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="flex items-center gap-4">
             <img src="${p.images?.[0] || 'logo.png'}" class="w-12 h-12 object-cover rounded bg-surface-container">
             <div>
-              <div class="font-bold text-sm">${p.name} <span class="text-primary text-xs ml-2">Score: ${p.score}/10</span></div>
-              <div class="text-xs text-outline">${p.category}</div>
+              <div class="font-bold text-sm">${p.name} <span class="text-primary text-xs ml-2">Score: ${calculateFinalScore(p)}/10</span></div>
+              <div class="text-xs text-outline">${p.category || 'Uncategorized'}</div>
             </div>
           </div>
           <div class="flex gap-2">
@@ -283,7 +338,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           document.getElementById('p-images').value = p.images?.[0] || '';
           document.getElementById('p-merchants').value = (p.merchants || []).join('\n');
           document.getElementById('p-author-name').value = p.authorName || '';
-          document.getElementById('p-author-url').value = p.authorUrl || '';
+          document.getElementById('p-author-img').value = p.authorImg || '';
+          document.getElementById('p-author-socials').value = (p.authorSocials || []).join('\n');
           document.getElementById('p-hot').checked = p.hotDeal || false;
           document.getElementById('tab-add').click();
           window.scrollTo(0,0);
@@ -306,40 +362,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // 2. HOME PAGE (INDEX)
-  if (document.getElementById('interest-products')) {
-    const products = await loadProducts();
-    const container = document.getElementById('interest-products');
-    container.innerHTML = '';
-    if (!products.length) container.innerHTML = `<div class="col-span-full py-12 text-center text-outline">No reviews yet. Admin needs to publish some.</div>`;
-    else shuffle(products).slice(0, 8).forEach(p => container.appendChild(createProductCard(p)));
-  }
-
-  // 3. CATALOG PAGE (PRODUCTS)
-  if (document.getElementById('products-grid')) {
-    const container = document.getElementById('products-grid');
-    const searchInput = document.getElementById('search-input');
-    const products = await loadProducts();
-    
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('search') && searchInput) searchInput.value = params.get('search');
-
-    function renderGrid() {
-      let result = [...products].reverse();
-      if (searchInput && searchInput.value) {
-        const q = searchInput.value.toLowerCase();
-        result = result.filter(p => p.name.toLowerCase().includes(q));
-      }
-      container.innerHTML = '';
-      if (!result.length) container.innerHTML = `<div class="col-span-full text-center py-12 text-outline bg-surface-container-low rounded-xl">No reviews found.</div>`;
-      else result.forEach(p => container.appendChild(createProductCard(p)));
-    }
-    
-    if (searchInput) searchInput.addEventListener('input', renderGrid);
-    renderGrid();
-  }
-
-  // 4. SINGLE PRODUCT PAGE
+  // 2. SINGLE PRODUCT PAGE
   if (document.getElementById('product-name')) {
     const urlParams = new URLSearchParams(window.location.search);
     const slug = urlParams.get('slug');
@@ -353,9 +376,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    const calculatedScore = calculateFinalScore(product);
+
     document.title = product.name + " Review | The Geek Shop";
     document.getElementById('product-name').textContent = product.name;
-    document.getElementById('product-score-stars').innerHTML = generateStarsHTML(product.score);
+    document.getElementById('product-score-stars').innerHTML = generateStarsHTML(calculatedScore);
     document.getElementById('product-price').textContent = product.price || '';
     document.getElementById('product-meta-desc').textContent = product.metaDescription || product.description;
     document.getElementById('product-detailed-desc').innerHTML = product.detailedDescription || "No detailed review provided.";
@@ -364,7 +389,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('main-image').src = product.images[0];
     }
 
-    // Build Specifications Block
+    // Specs Block
     const specs = parseDataList(product.specs);
     const specsGrid = document.getElementById('product-specs-grid');
     if (Object.keys(specs).length > 0) {
@@ -378,20 +403,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       specsGrid.innerHTML = `<span class="text-outline">No specs provided.</span>`;
     }
 
-    // Build Sub-scores Block
+    // Epic Games Style Circular Sub-Scores
     const subscores = parseDataList(product.subScores);
     const subscoresGrid = document.getElementById('subscores-grid');
     if (Object.keys(subscores).length > 0) {
       document.getElementById('subscores-wrapper').classList.remove('hidden');
-      subscoresGrid.innerHTML = Object.entries(subscores).map(([k, v]) => `
-        <div class="bg-surface-container-low border border-white/5 p-4 rounded-xl flex justify-between items-center">
-          <span class="text-outline font-bold text-sm uppercase tracking-widest">${k}</span>
-          <span class="text-primary font-mono font-bold">${v}</span>
-        </div>
-      `).join('');
+      subscoresGrid.innerHTML = Object.entries(subscores).map(([k, v]) => {
+        const numVal = parseFloat(v.toString().replace('/10','')) || 0;
+        const dashOffset = 100 - (numVal * 10);
+        return `
+          <div class="bg-surface-container-low border border-white/5 p-4 rounded-xl flex flex-col items-center justify-center text-center space-y-3">
+            <div class="relative w-16 h-16 flex items-center justify-center">
+              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                <path class="text-surface-variant" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path class="text-primary" stroke-width="3.5" stroke-dasharray="100" stroke-dashoffset="${dashOffset}" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              </svg>
+              <span class="absolute font-mono font-bold text-sm text-on-surface">${numVal}</span>
+            </div>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-outline truncate w-full">${k}</span>
+          </div>
+        `;
+      }).join('');
     }
 
-    // Build Pros & Cons
+    // Pros & Cons
     const proConSection = document.getElementById('pros-cons-section');
     if (product.pros?.length || product.cons?.length) {
       let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">`;
@@ -407,7 +442,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       proConSection.innerHTML = html;
     }
 
-    // Final Verdict & Author Box
+    // Verdict & Author Box
     const verdictContainer = document.getElementById('verdict-container');
     if (product.verdict) {
       verdictContainer.innerHTML = `
@@ -419,18 +454,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const authorContainer = document.getElementById('author-container');
     if (product.authorName) {
+      let avatarHTML = product.authorImg 
+        ? `<img src="${product.authorImg}" class="w-16 h-16 rounded-full object-cover mb-3 border border-primary/30">`
+        : `<div class="w-16 h-16 bg-surface-variant rounded-full mb-3 flex items-center justify-center text-primary text-2xl font-bold font-display uppercase border border-primary/20">${product.authorName.charAt(0)}</div>`;
+
+      let socialsHTML = '';
+      if (product.authorSocials && product.authorSocials.length > 0) {
+        socialsHTML = `<div class="flex flex-wrap gap-2 justify-center mt-3">` + product.authorSocials.map(s => {
+          const parts = s.split('|');
+          return `<a href="${parts[1] || '#'}" target="_blank" class="text-xs bg-surface-container hover:bg-surface-variant text-primary border border-primary/20 px-3 py-1 rounded-full transition-all">${parts[0] || 'Social'}</a>`;
+        }).join('') + `</div>`;
+      }
+
       authorContainer.innerHTML = `
-        <div class="bg-surface-container-low rounded-2xl p-8 border border-white/5 h-full flex flex-col justify-center items-center text-center">
-          <div class="w-16 h-16 bg-surface-variant rounded-full mb-4 flex items-center justify-center text-primary text-2xl font-bold font-display uppercase border border-primary/20">
-            ${product.authorName.charAt(0)}
-          </div>
-          <p class="text-xs uppercase tracking-widest text-outline mb-1">Reviewed By</p>
-          <h4 class="text-lg font-bold text-on-surface mb-2">${product.authorName}</h4>
-          ${product.authorUrl ? `<a href="${product.authorUrl}" target="_blank" class="text-sm text-primary hover:underline">Follow Author</a>` : ''}
+        <div class="bg-surface-container-low rounded-2xl p-6 border border-white/5 h-full flex flex-col justify-center items-center text-center">
+          ${avatarHTML}
+          <p class="text-[10px] uppercase tracking-widest text-outline">Reviewed By</p>
+          <h4 class="text-lg font-bold text-on-surface mb-1">${product.authorName}</h4>
+          ${socialsHTML}
         </div>`;
     }
 
-    // Side-by-side Merchant Links
+    // Buy Links (Side by Side)
     const orderRow = document.getElementById('order-row');
     if (product.merchants && product.merchants.length > 0) {
       orderRow.innerHTML = product.merchants.map(m => {
@@ -446,19 +491,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       orderRow.innerHTML = '<div class="px-4 py-2 bg-surface-container rounded-lg text-outline text-sm border border-white/5">No active listings available.</div>';
     }
 
-    // Inject 4 Similar Products Based on Category (or fallback to newest)
+    // Similar Products (Filtered by price range +-100 to 500 BDT)
     const similarContainer = document.getElementById('similar-grid');
-    let similar = products.filter(p => p.id !== product.id && p.category === product.category);
+    const currentPriceNum = parseNumberFromPrice(product.price);
+    
+    let similar = products.filter(p => {
+      if (p.id === product.id) return false;
+      const pPriceNum = parseNumberFromPrice(p.price);
+      if (!currentPriceNum || !pPriceNum) return p.category === product.category;
+      
+      const diff = Math.abs(pPriceNum - currentPriceNum);
+      return diff <= 500; // Within 100-500 price tolerance range
+    });
+
     if (similar.length < 4) {
-      // Pad with other recent items if category doesn't have enough
-      const others = products.filter(p => p.id !== product.id && p.category !== product.category);
-      similar = [...similar, ...others];
+      const remaining = products.filter(p => p.id !== product.id && !similar.includes(p));
+      similar = [...similar, ...remaining];
     }
-    similar = similar.slice(0, 4); // Take exactly up to 4
+
+    similar = similar.slice(0, 4); // Keep exactly 4 compact items
     if(similar.length > 0) {
-      similar.forEach(p => similarContainer.appendChild(createProductCard(p)));
+      similar.forEach(p => similarContainer.appendChild(createCompactProductCard(p)));
     } else {
-      similarContainer.innerHTML = '<span class="text-outline">No other reviews yet.</span>';
+      similarContainer.innerHTML = '<span class="text-outline">No similar products found within price range.</span>';
     }
   }
 });
