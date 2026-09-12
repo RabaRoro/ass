@@ -1,5 +1,6 @@
 // ====== GITHUB PAT BACKEND ENGINE ======
-const DB_FILE = 'catalog.json';
+const DB_DIR = 'DB';
+const META_FILE = `${DB_DIR}/megacatalogmeta.json`;
 
 function getGHConfig() {
   return {
@@ -13,52 +14,56 @@ function getGHConfig() {
 function utf8ToBase64(str) { return btoa(unescape(encodeURIComponent(str))); }
 function base64ToUtf8(str) { return decodeURIComponent(escape(atob(str))); }
 
-const productsMap = new Map();
-let cachedProducts = null;
-let currentSha = null;
+const fileCache = new Map();
+const fileShas = new Map();
 
-async function fetchFromGitHub() {
+async function fetchFile(filePath, forceRefresh = false) {
+  if (!forceRefresh && fileCache.has(filePath)) return fileCache.get(filePath);
   const conf = getGHConfig();
-  if (!conf.owner || !conf.repo) return [];
+  if (!conf.owner || !conf.repo) return null;
 
   try {
-    const res = await fetch(`https://api.github.com/repos/${conf.owner}/${conf.repo}/contents/${DB_FILE}`, {
+    const res = await fetch(`https://api.github.com/repos/${conf.owner}/${conf.repo}/contents/${filePath}`, {
       headers: conf.pat ? { 'Authorization': `token ${conf.pat}`, 'Accept': 'application/vnd.github.v3+json' } : { 'Accept': 'application/vnd.github.v3+json' }
     });
     
     if (res.status === 404) return [];
-    if (!res.ok) throw new Error("GitHub fetch failed");
+    if (!res.ok) throw new Error(`GitHub fetch failed for ${filePath}`);
     
     const data = await res.json();
-    currentSha = data.sha;
-    return JSON.parse(base64ToUtf8(data.content));
+    fileShas.set(filePath, data.sha);
+    const parsed = JSON.parse(base64ToUtf8(data.content));
+    fileCache.set(filePath, parsed);
+    return parsed;
   } catch (err) {
     console.error(err);
     return [];
   }
 }
 
-async function saveToGitHub(productsArray) {
+async function saveFile(filePath, contentArray) {
   const conf = getGHConfig();
-  if (!conf.pat) { showToast("Not authenticated."); return; }
+  if (!conf.pat) throw new Error("Not authenticated.");
   
-  const content = utf8ToBase64(JSON.stringify(productsArray, null, 2));
+  const content = utf8ToBase64(JSON.stringify(contentArray, null, 2));
+  const sha = fileShas.get(filePath);
+  
   const body = {
-    message: "Automated DB Update via GeekShop Admin",
+    message: `Automated DB Update: ${filePath}`,
     content: content,
-    ...(currentSha && { sha: currentSha })
+    ...(sha && { sha: sha })
   };
 
-  const res = await fetch(`https://api.github.com/repos/${conf.owner}/${conf.repo}/contents/${DB_FILE}`, {
+  const res = await fetch(`https://api.github.com/repos/${conf.owner}/${conf.repo}/contents/${filePath}`, {
     method: 'PUT',
     headers: { 'Authorization': `token ${conf.pat}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
 
-  if (!res.ok) throw new Error("Failed to save to GitHub");
+  if (!res.ok) throw new Error(`Failed to save ${filePath}`);
   const data = await res.json();
-  currentSha = data.content.sha;
-  cachedProducts = productsArray;
+  fileShas.set(filePath, data.content.sha);
+  fileCache.set(filePath, contentArray);
 }
 
 // ====== UI HELPERS ======
@@ -81,11 +86,39 @@ function showToast(message) {
   }, 2500);
 }
 
-async function loadProducts(forceRefresh = false) {
-  if (forceRefresh || !cachedProducts) cachedProducts = await fetchFromGitHub();
-  productsMap.clear();
-  cachedProducts.forEach(p => productsMap.set(p.id, p));
-  return cachedProducts;
+// Shimmer UI Animation Engine
+function renderShimmer(containerId, count = 8, type = 'card') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  
+  for (let i = 0; i < count; i++) {
+    if (type === 'list') {
+      container.innerHTML += `
+        <div class="animate-pulse flex items-center justify-between p-4 bg-surface-container-lowest rounded-xl border border-white/5">
+          <div class="flex items-center gap-4 w-full">
+            <div class="w-12 h-12 bg-surface-container-high rounded"></div>
+            <div class="space-y-2 flex-1 max-w-[200px]">
+              <div class="h-4 bg-surface-container-high rounded w-full"></div>
+              <div class="h-3 bg-surface-container-high rounded w-1/2"></div>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      const aspectClass = type === 'compact' ? 'aspect-[16/9]' : 'aspect-[4/5]';
+      container.innerHTML += `
+        <div class="animate-pulse bg-surface-container-low rounded-xl overflow-hidden border border-white/5 flex flex-col h-full">
+          <div class="${aspectClass} bg-surface-container-high w-full"></div>
+          <div class="p-6 flex flex-col gap-3 flex-1">
+            <div class="h-5 bg-surface-container-high rounded w-3/4"></div>
+            ${type !== 'compact' ? `
+            <div class="h-4 bg-surface-container-high rounded w-1/4 mb-2"></div>
+            <div class="h-3 bg-surface-container-high rounded w-full"></div>
+            <div class="h-3 bg-surface-container-high rounded w-5/6"></div>` : ''}
+          </div>
+        </div>`;
+    }
+  }
 }
 
 function shuffle(array) { return array.slice().sort(() => Math.random() - 0.5); }
@@ -103,7 +136,7 @@ function parseDataList(dataStr) {
 }
 
 function createProductCard(p, compact = false) {
-  let slug = p.name.toLowerCase().replace(/\s+/g, '-');
+  let slug = p.slug || p.name.toLowerCase().replace(/\s+/g, '-');
   const card = document.createElement('div');
   card.className = "group relative bg-surface-container-low rounded-xl overflow-hidden transition-all duration-500 hover:translate-y-[-4px] border border-white/5 hover:border-primary/30 flex flex-col cursor-pointer";
   card.onclick = () => window.location.href = `product.html?slug=${slug}`;
@@ -115,9 +148,12 @@ function createProductCard(p, compact = false) {
   let paddingClass = compact ? 'p-4' : 'p-6';
   let descClass = compact ? 'hidden' : 'text-sm text-outline mb-4 line-clamp-2';
 
+  // Support for both meta schema and full schema image references
+  let imageSrc = (p.images && p.images[0]) || p.image || 'logo.png';
+
   card.innerHTML = `
     <div class="${aspectClass} bg-surface-container-lowest relative overflow-hidden flex-shrink-0">
-      <img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" src="${p.images?.[0] || 'logo.png'}" alt="${p.name}">
+      <img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" src="${imageSrc}" alt="${p.name}">
       <div class="absolute top-3 left-3 right-3 flex flex-wrap z-10">${badgeHTML}</div>
       <div class="absolute bottom-2 right-2 bg-surface-bright/90 backdrop-blur-md rounded-full px-2 py-0.5 flex items-center justify-center text-primary shadow-2xl z-20 font-bold text-xs">
         <span class="material-symbols-outlined text-xs mr-1">star</span> ${p.score || 'N/A'}
@@ -162,7 +198,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       loginSec.classList.add('hidden');
       dashSec.classList.remove('hidden');
       document.getElementById('logout-btn').classList.remove('hidden');
-      loadProducts().then(renderAdminList);
+      renderShimmer('admin-products-list', 5, 'list');
+      fetchFile(META_FILE).then(renderAdminList);
     }
 
     const replaceDoubleSpace = function(e) {
@@ -205,10 +242,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     let editId = null;
+    let editShard = null;
+    
     document.getElementById('product-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('submit-btn');
-      btn.innerHTML = `Saving...`;
+      btn.innerHTML = `Saving to Shards...`;
       
       let finalScore = document.getElementById('p-score').value.trim();
       const subScoresText = document.getElementById('p-subscores').value.trim();
@@ -249,76 +288,139 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
 
       try {
-        let products = await loadProducts();
-        if (editId) products = products.map(p => p.id === editId ? product : p);
-        else products.push(product);
+        let metaDB = await fetchFile(META_FILE);
+        let targetShard = editShard;
+
+        // Routing Logic: Find a shard for new items
+        if (!targetShard) {
+           const shardCounts = {};
+           metaDB.forEach(m => { shardCounts[m.shard] = (shardCounts[m.shard] || 0) + 1; });
+           
+           // Find highest shard number
+           const shardNums = Object.keys(shardCounts).map(s => parseInt(s.replace('shard-', '').replace('.json', ''))).filter(n => !isNaN(n));
+           let maxShard = shardNums.length > 0 ? Math.max(...shardNums) : 1;
+           
+           // Max 10 items per shard
+           if ((shardCounts[`shard-${maxShard}.json`] || 0) >= 10) {
+               maxShard += 1;
+           }
+           targetShard = `shard-${maxShard}.json`;
+        }
+
+        // 1. Save to Shard
+        const shardPath = `${DB_DIR}/${targetShard}`;
+        let shardData = await fetchFile(shardPath) || [];
+        const pIndex = shardData.findIndex(p => p.id === product.id);
+        if (pIndex > -1) shardData[pIndex] = product;
+        else shardData.push(product);
+        await saveFile(shardPath, shardData);
+
+        // 2. Update MetaDB
+        const metaObj = {
+            id: product.id,
+            slug: product.name.toLowerCase().replace(/\s+/g, '-'),
+            name: product.name,
+            category: product.category,
+            price: product.price,
+            score: product.score,
+            image: product.images[0] || '',
+            hotDeal: product.hotDeal,
+            description: product.metaDescription || product.description,
+            specs: product.specs,
+            shard: targetShard
+        };
+
+        const mIndex = metaDB.findIndex(m => m.id === product.id);
+        if (mIndex > -1) metaDB[mIndex] = metaObj;
+        else metaDB.push(metaObj);
         
-        await saveToGitHub(products);
+        await saveFile(META_FILE, metaDB);
+        
         showToast("Review published successfully!");
         document.getElementById('product-form').reset();
-        editId = null;
+        editId = null; editShard = null;
         document.getElementById('form-title').innerText = "Post New Review";
         renderAdminList();
-      } catch (err) { showToast("Error saving to GitHub."); }
+      } catch (err) { 
+        console.error(err);
+        showToast("Error saving to GitHub."); 
+      }
       btn.innerHTML = `Publish Post`;
     });
 
     async function renderAdminList() {
       const list = document.getElementById('admin-products-list');
-      const products = await loadProducts();
+      const metaDB = await fetchFile(META_FILE);
       list.innerHTML = '';
       
-      products.reverse().forEach(p => {
+      if (!metaDB || metaDB.length === 0) {
+        list.innerHTML = `<div class="p-8 text-center text-outline">No posts found in database.</div>`;
+        return;
+      }
+
+      [...metaDB].reverse().forEach(p => {
         const div = document.createElement('div');
         div.className = "flex items-center justify-between p-4 bg-surface-container-lowest rounded-xl border border-white/5";
         div.innerHTML = `
           <div class="flex items-center gap-4">
-            <img src="${p.images?.[0] || 'logo.png'}" class="w-12 h-12 object-cover rounded bg-surface-container">
+            <img src="${p.image || 'logo.png'}" class="w-12 h-12 object-cover rounded bg-surface-container">
             <div>
               <div class="font-bold text-sm">${p.name} <span class="text-primary text-xs ml-2">Score: ${p.score}/10</span></div>
-              <div class="text-xs text-outline">${p.category}</div>
+              <div class="text-xs text-outline">File: ${p.shard}</div>
             </div>
           </div>
           <div class="flex gap-2">
-            <button class="edit-btn px-3 py-1 bg-surface-variant hover:bg-surface-container-high rounded text-xs font-bold">Edit</button>
-            <button class="delete-btn px-3 py-1 bg-red-900/30 hover:bg-red-900/60 text-red-400 rounded text-xs font-bold">Delete</button>
+            <button class="edit-btn px-3 py-1 bg-surface-variant hover:bg-surface-container-high rounded text-xs font-bold transition-all">Edit</button>
+            <button class="delete-btn px-3 py-1 bg-red-900/30 hover:bg-red-900/60 text-red-400 rounded text-xs font-bold transition-all">Delete</button>
           </div>
         `;
         
-        div.querySelector('.edit-btn').onclick = () => {
-          editId = p.id;
-          document.getElementById('form-title').innerText = "Edit Review: " + p.name;
-          document.getElementById('p-name').value = p.name;
-          document.getElementById('p-category').value = p.category || '';
-          document.getElementById('p-price').value = p.price || '';
-          document.getElementById('p-score').value = p.score || '';
-          document.getElementById('p-pros').value = (p.pros || []).join('\n');
-          document.getElementById('p-cons').value = (p.cons || []).join('\n');
-          document.getElementById('p-verdict').value = p.verdict || '';
-          document.getElementById('p-desc').value = p.description || '';
-          document.getElementById('p-meta-desc').value = p.metaDescription || '';
-          document.getElementById('p-detailed-desc').value = p.detailedDescription || '';
-          document.getElementById('p-specs').value = p.specs || '';
-          document.getElementById('p-subscores').value = p.subScores || '';
-          document.getElementById('p-images').value = p.images?.[0] || '';
-          document.getElementById('p-merchants').value = (p.merchants || []).join('\n');
-          document.getElementById('p-author-name').value = p.authorName || '';
-          document.getElementById('p-author-image').value = p.authorImage || '';
-          document.getElementById('p-author-socials').value = (p.authorSocials || []).join('\n');
+        div.querySelector('.edit-btn').onclick = async () => {
+          showToast(`Fetching ${p.shard} details...`);
+          const shardData = await fetchFile(`${DB_DIR}/${p.shard}`);
+          const fullProduct = shardData.find(x => x.id === p.id);
           
-          if (!p.authorSocials && p.authorUrl) {
-              document.getElementById('p-author-socials').value = `Link|${p.authorUrl}`;
-          }
+          if(!fullProduct) { showToast("Data not found in shard."); return; }
 
-          document.getElementById('p-hot').checked = p.hotDeal || false;
+          editId = p.id;
+          editShard = p.shard;
+          document.getElementById('form-title').innerText = "Edit Review: " + fullProduct.name;
+          document.getElementById('p-name').value = fullProduct.name;
+          document.getElementById('p-category').value = fullProduct.category || '';
+          document.getElementById('p-price').value = fullProduct.price || '';
+          document.getElementById('p-score').value = fullProduct.score || '';
+          document.getElementById('p-pros').value = (fullProduct.pros || []).join('\n');
+          document.getElementById('p-cons').value = (fullProduct.cons || []).join('\n');
+          document.getElementById('p-verdict').value = fullProduct.verdict || '';
+          document.getElementById('p-desc').value = fullProduct.description || '';
+          document.getElementById('p-meta-desc').value = fullProduct.metaDescription || '';
+          document.getElementById('p-detailed-desc').value = fullProduct.detailedDescription || '';
+          document.getElementById('p-specs').value = fullProduct.specs || '';
+          document.getElementById('p-subscores').value = fullProduct.subScores || '';
+          document.getElementById('p-images').value = fullProduct.images?.[0] || '';
+          document.getElementById('p-merchants').value = (fullProduct.merchants || []).join('\n');
+          document.getElementById('p-author-name').value = fullProduct.authorName || '';
+          document.getElementById('p-author-image').value = fullProduct.authorImage || '';
+          document.getElementById('p-author-socials').value = (fullProduct.authorSocials || []).join('\n');
+          
+          document.getElementById('p-hot').checked = fullProduct.hotDeal || false;
           document.getElementById('tab-add').click();
           window.scrollTo(0,0);
         };
         
         div.querySelector('.delete-btn').onclick = async () => {
-          if (confirm("Delete this review forever?")) {
-            await saveToGitHub(products.filter(item => item.id !== p.id));
-            showToast("Review deleted");
+          if (confirm(`Delete '${p.name}' from ${p.shard} forever?`)) {
+            // Delete from Shard
+            const shardPath = `${DB_DIR}/${p.shard}`;
+            let shardData = await fetchFile(shardPath);
+            shardData = shardData.filter(x => x.id !== p.id);
+            await saveFile(shardPath, shardData);
+
+            // Delete from Meta
+            const newMeta = metaDB.filter(x => x.id !== p.id);
+            await saveFile(META_FILE, newMeta);
+            
+            showToast("Review deleted completely.");
             renderAdminList();
           }
         };
@@ -327,44 +429,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     document.getElementById('sync-catalog-btn').addEventListener('click', async () => {
-      await loadProducts(true);
-      showToast("Database Synced with GitHub");
+      renderShimmer('admin-products-list', 5, 'list');
+      await fetchFile(META_FILE, true);
+      renderAdminList();
+      showToast("Database Synchronized");
     });
   }
 
   // 2. HOME PAGE (INDEX)
   if (document.getElementById('interest-products')) {
-    const products = await loadProducts();
+    renderShimmer('interest-products', 8, 'card');
+    const metaDB = await fetchFile(META_FILE);
     const container = document.getElementById('interest-products');
     container.innerHTML = '';
-    if (!products.length) container.innerHTML = `<div class="col-span-full py-12 text-center text-outline">No reviews yet. Admin needs to publish some.</div>`;
-    else shuffle(products).slice(0, 8).forEach(p => container.appendChild(createProductCard(p)));
+    
+    if (!metaDB || !metaDB.length) container.innerHTML = `<div class="col-span-full py-12 text-center text-outline">No reviews yet. Admin needs to publish some.</div>`;
+    else shuffle(metaDB).slice(0, 8).forEach(p => container.appendChild(createProductCard(p)));
   }
 
   // 3. CATALOG PAGE (PRODUCTS)
   if (document.getElementById('products-grid')) {
+    renderShimmer('products-grid', 12, 'card');
+    
     const container = document.getElementById('products-grid');
     const searchInput = document.getElementById('search-input');
-    
-    // New Filter Elements
     const minPriceInput = document.getElementById('filter-price-min');
     const maxPriceInput = document.getElementById('filter-price-max');
     const layoutSelect = document.getElementById('filter-layout');
     const connSelect = document.getElementById('filter-connectivity');
 
-    const products = await loadProducts();
+    // Load ONLY the lightweight Meta Catalog
+    const metaDB = await fetchFile(META_FILE) || [];
     
-    // Auto-parse Layouts & Connectivities directly from product specs
+    // Auto-parse Layouts & Connectivities from the meta's embedded specs
     const layouts = new Set();
     const connectivities = new Set();
     
-    products.forEach(p => {
+    metaDB.forEach(p => {
       const specs = parseDataList(p.specs);
-      if (specs['Layout']) {
-        layouts.add(specs['Layout']);
-      }
+      if (specs['Layout']) layouts.add(specs['Layout']);
       if (specs['Connectivity']) {
-        // Split complex connectivity strings (e.g. "Bluetooth / 2.4GHz") into distinct options
         specs['Connectivity'].split(/[\/,]/).map(s => s.trim()).filter(Boolean).forEach(c => connectivities.add(c));
       }
     });
@@ -389,21 +493,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (params.get('search') && searchInput) searchInput.value = params.get('search');
 
     function renderGrid() {
-      let result = [...products].reverse();
+      let result = [...metaDB].reverse();
       
-      // 1. Filter by Search Query
       if (searchInput && searchInput.value) {
         const q = searchInput.value.toLowerCase();
         result = result.filter(p => p.name.toLowerCase().includes(q));
       }
       
-      // 2. Filter by Category (if coming from Index)
       const categoryParam = params.get('category');
       if (categoryParam) {
           result = result.filter(p => p.category && p.category.toLowerCase() === categoryParam.toLowerCase());
       }
 
-      // 3. Apply Multi-layered Specs & Price Filters
       if (minPriceInput && maxPriceInput && layoutSelect && connSelect) {
         const minPrice = parseFloat(minPriceInput.value);
         const maxPrice = parseFloat(maxPriceInput.value);
@@ -412,8 +513,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         result = result.filter(p => {
           const specs = parseDataList(p.specs);
-          
-          // Parse price range strings securely 
           let pPrice = null;
           if (p.price) {
             const priceStr = p.price.replace(/,/g, ''); 
@@ -432,13 +531,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       container.innerHTML = '';
       if (!result.length) {
-        container.innerHTML = `<div class="col-span-full text-center py-12 text-outline bg-surface-container-low rounded-xl border border-white/5">No reviews found matching your criteria.</div>`;
+        container.innerHTML = `<div class="col-span-full text-center py-12 text-outline bg-surface-container-low rounded-xl border border-white/5 shadow-inner">No reviews found matching your criteria.</div>`;
       } else {
         result.forEach(p => container.appendChild(createProductCard(p)));
       }
     }
     
-    // Bind Realtime Event Listeners
     if (searchInput) searchInput.addEventListener('input', renderGrid);
     if (minPriceInput) minPriceInput.addEventListener('input', renderGrid);
     if (maxPriceInput) maxPriceInput.addEventListener('input', renderGrid);
@@ -454,12 +552,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const slug = urlParams.get('slug');
     if (!slug) return;
 
-    const products = await loadProducts();
-    const product = products.find(p => p.name.toLowerCase().replace(/\s+/g, '-') === slug);
+    // Load Meta first to find where the full product is stored
+    const metaDB = await fetchFile(META_FILE);
+    const targetMeta = metaDB.find(m => (m.slug || m.name.toLowerCase().replace(/\s+/g, '-')) === slug);
 
-    if (!product) {
+    if (!targetMeta) {
       document.getElementById('product-name').textContent = "Review Not Found";
       return;
+    }
+
+    // Now load the Specific Shard to get the heavy text (HTML desc, pros, cons)
+    const shardData = await fetchFile(`${DB_DIR}/${targetMeta.shard}`);
+    const product = shardData.find(p => p.id === targetMeta.id);
+
+    if (!product) {
+       document.getElementById('product-name').textContent = "Shard Data Error";
+       return;
     }
 
     document.title = product.name + " Review | The Geek Shop";
@@ -574,10 +682,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       orderRow.innerHTML = '<div class="px-4 py-2 bg-surface-container rounded-lg text-outline text-sm border border-white/5">No active listings available.</div>';
     }
 
+    // Similar Products - We can use the MetaDB directly for rendering these cards!
     const similarContainer = document.getElementById('similar-grid');
     let pPriceVal = parseFloat((product.price || "").replace(/[^0-9.]/g, '')) || 0;
     
-    let similar = products.filter(p => {
+    let similar = metaDB.filter(p => {
       if (p.id === product.id) return false;
       let otherPrice = parseFloat((p.price || "").replace(/[^0-9.]/g, '')) || 0;
       let priceDiff = Math.abs(otherPrice - pPriceVal);
@@ -585,7 +694,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     if (similar.length < 4) {
-      const others = products.filter(p => p.id !== product.id && !similar.includes(p));
+      const others = metaDB.filter(p => p.id !== product.id && !similar.includes(p));
       similar = [...similar, ...others];
     }
     
