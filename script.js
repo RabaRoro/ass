@@ -13,31 +13,25 @@ function getGHConfig() {
 function utf8ToBase64(str) { return btoa(unescape(encodeURIComponent(str))); }
 function base64ToUtf8(str) { return decodeURIComponent(escape(atob(str))); }
 
-// Global Memory
 const productsMap = new Map();
 let cachedProducts = null;
 let currentSha = null;
 
 async function fetchFromGitHub() {
-  // If no config locally (meaning it's a regular user), fetch public raw file
   const conf = getGHConfig();
-  if (!conf.owner || !conf.repo) {
-    console.log("No GH config found. You must be setting this up or need to run admin.html first.");
-    return [];
-  }
+  if (!conf.owner || !conf.repo) return [];
 
   try {
     const res = await fetch(`https://api.github.com/repos/${conf.owner}/${conf.repo}/contents/${DB_FILE}`, {
       headers: conf.pat ? { 'Authorization': `token ${conf.pat}`, 'Accept': 'application/vnd.github.v3+json' } : { 'Accept': 'application/vnd.github.v3+json' }
     });
     
-    if (res.status === 404) return []; // File doesn't exist yet
+    if (res.status === 404) return [];
     if (!res.ok) throw new Error("GitHub fetch failed");
     
     const data = await res.json();
     currentSha = data.sha;
-    const content = base64ToUtf8(data.content);
-    return JSON.parse(content);
+    return JSON.parse(base64ToUtf8(data.content));
   } catch (err) {
     console.error(err);
     return [];
@@ -96,23 +90,20 @@ async function loadProducts(forceRefresh = false) {
 
 function shuffle(array) { return array.slice().sort(() => Math.random() - 0.5); }
 
-function parseSpecsData(specData) {
-  if (!specData) return {};
-  if (typeof specData === 'object') return specData;
-  const specsObj = {};
-  specData.split('\n').forEach(line => {
+function parseDataList(dataStr) {
+  if (!dataStr) return {};
+  const obj = {};
+  dataStr.split('\n').forEach(line => {
     if (line.includes(':')) {
       const [k, ...v] = line.split(':');
-      if (k.trim() && v.join(':').trim()) specsObj[k.trim()] = v.join(':').trim();
+      if (k.trim() && v.join(':').trim()) obj[k.trim()] = v.join(':').trim();
     }
   });
-  return specsObj;
+  return obj;
 }
 
-function createProductCard(p, products) {
-  const sameName = products.filter(other => other.name.toLowerCase() === p.name.toLowerCase());
+function createProductCard(p) {
   let slug = p.name.toLowerCase().replace(/\s+/g, '-');
-  if (sameName.length > 1 && p.color) slug += '-' + p.color.toLowerCase().replace(/\s+/g, '-');
   
   const card = document.createElement('div');
   card.className = "group relative bg-surface-container-low rounded-xl overflow-hidden transition-all duration-500 hover:translate-y-[-8px] border border-white/5 hover:border-primary/30 flex flex-col cursor-pointer";
@@ -125,21 +116,35 @@ function createProductCard(p, products) {
       <img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" src="${p.images?.[0] || 'logo.png'}" alt="${p.name}">
       <div class="absolute top-4 left-4 right-4 flex flex-wrap z-10">${badgeHTML}</div>
       <div class="absolute bottom-4 right-4 bg-surface-bright/90 backdrop-blur-md rounded-full px-3 py-1 flex items-center justify-center text-primary shadow-2xl z-20 font-bold text-sm">
-        <span class="material-symbols-outlined text-sm mr-1">star</span> ${p.score || 'N/A'}/10
+        <span class="material-symbols-outlined text-sm mr-1">star</span> ${p.score || 'N/A'}
       </div>
     </div>
     <div class="p-6 flex-1 flex flex-col justify-between">
       <div>
-        <h3 class="text-xl font-bold tracking-tight line-clamp-1 mb-2">${p.name}</h3>
+        <div class="flex justify-between items-start gap-2 mb-2">
+           <h3 class="text-xl font-bold tracking-tight line-clamp-1">${p.name}</h3>
+           ${p.price ? `<span class="text-primary font-mono text-sm">${p.price}</span>` : ''}
+        </div>
         <p class="text-sm text-outline mb-4 line-clamp-2">${p.description || p.metaDescription || 'Detailed review available.'}</p>
       </div>
       <div class="flex gap-2 mt-auto">
-        ${p.color ? `<span class="bg-surface-container-highest text-[10px] text-on-surface-variant font-bold px-3 py-1 rounded-full truncate max-w-[50%]">${p.color}</span>` : ''}
-        ${p.category ? `<span class="bg-surface-container-highest text-[10px] text-on-surface-variant font-bold px-3 py-1 rounded-full truncate max-w-[50%]">${p.category}</span>` : ''}
+        ${p.category ? `<span class="bg-surface-container-highest text-[10px] text-on-surface-variant font-bold px-3 py-1 rounded-full truncate">${p.category}</span>` : ''}
       </div>
     </div>
   `;
   return card;
+}
+
+function generateStarsHTML(scoreNum) {
+  const s = parseFloat(scoreNum || 0) / 2;
+  let html = '';
+  for(let i=1; i<=5; i++) {
+    if (s >= i) html += `<span class="material-symbols-outlined text-yellow-400" style="font-variation-settings: 'FILL' 1;">star</span>`;
+    else if (s >= i - 0.5) html += `<span class="material-symbols-outlined text-yellow-400" style="font-variation-settings: 'FILL' 1;">star_half</span>`; // Uses half star if supported, else looks full or empty
+    else html += `<span class="material-symbols-outlined text-yellow-400/30">star</span>`;
+  }
+  html += `<span class="text-on-surface font-bold text-xl ml-2 font-mono">${scoreNum}/10</span>`;
+  return html;
 }
 
 // ====== PAGE ROUTERS (DOM Based Detection) ======
@@ -156,6 +161,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('logout-btn').classList.remove('hidden');
       loadProducts().then(renderAdminList);
     }
+
+    // Auto-format double spaces into '|' for merchant URLs
+    document.getElementById('p-merchants').addEventListener('input', function(e) {
+      if (this.value.includes('  ')) {
+        const start = this.selectionStart;
+        this.value = this.value.replace(/  /g, '|');
+        this.setSelectionRange(start - 1, start - 1);
+      }
+    });
 
     document.getElementById('login-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -190,13 +204,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('product-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('submit-btn');
-      btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> Saving...`;
+      btn.innerHTML = `Saving...`;
       
       const product = {
         id: editId || Date.now().toString(),
         name: document.getElementById('p-name').value.trim(),
         category: document.getElementById('p-category').value,
-        color: document.getElementById('p-color').value.trim(),
+        price: document.getElementById('p-price').value.trim(),
         score: document.getElementById('p-score').value.trim(),
         pros: document.getElementById('p-pros').value.split('\n').filter(Boolean),
         cons: document.getElementById('p-cons').value.split('\n').filter(Boolean),
@@ -205,8 +219,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         metaDescription: document.getElementById('p-meta-desc').value.trim(),
         detailedDescription: document.getElementById('p-detailed-desc').value.trim(),
         specs: document.getElementById('p-specs').value.trim(),
-        images: document.getElementById('p-images').value.split('\n').map(u=>u.trim()).filter(Boolean),
+        subScores: document.getElementById('p-subscores').value.trim(),
+        images: [document.getElementById('p-images').value.trim()].filter(Boolean),
         merchants: document.getElementById('p-merchants').value.split('\n').map(u=>u.trim()).filter(Boolean),
+        authorName: document.getElementById('p-author-name').value.trim(),
+        authorUrl: document.getElementById('p-author-url').value.trim(),
         hotDeal: document.getElementById('p-hot').checked,
         timestamp: Date.now()
       };
@@ -223,7 +240,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('form-title').innerText = "Post New Review";
         renderAdminList();
       } catch (err) { showToast("Error saving to GitHub."); }
-      btn.innerHTML = `<span class="material-symbols-outlined">add_circle</span> Publish Post`;
+      btn.innerHTML = `Publish Post`;
     });
 
     async function renderAdminList() {
@@ -252,8 +269,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           editId = p.id;
           document.getElementById('form-title').innerText = "Edit Review: " + p.name;
           document.getElementById('p-name').value = p.name;
-          document.getElementById('p-category').value = p.category;
-          document.getElementById('p-color').value = p.color || '';
+          document.getElementById('p-category').value = p.category || '';
+          document.getElementById('p-price').value = p.price || '';
           document.getElementById('p-score').value = p.score || '';
           document.getElementById('p-pros').value = (p.pros || []).join('\n');
           document.getElementById('p-cons').value = (p.cons || []).join('\n');
@@ -262,8 +279,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           document.getElementById('p-meta-desc').value = p.metaDescription || '';
           document.getElementById('p-detailed-desc').value = p.detailedDescription || '';
           document.getElementById('p-specs').value = p.specs || '';
-          document.getElementById('p-images').value = (p.images || []).join('\n');
+          document.getElementById('p-subscores').value = p.subScores || '';
+          document.getElementById('p-images').value = p.images?.[0] || '';
           document.getElementById('p-merchants').value = (p.merchants || []).join('\n');
+          document.getElementById('p-author-name').value = p.authorName || '';
+          document.getElementById('p-author-url').value = p.authorUrl || '';
           document.getElementById('p-hot').checked = p.hotDeal || false;
           document.getElementById('tab-add').click();
           window.scrollTo(0,0);
@@ -292,7 +312,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const container = document.getElementById('interest-products');
     container.innerHTML = '';
     if (!products.length) container.innerHTML = `<div class="col-span-full py-12 text-center text-outline">No reviews yet. Admin needs to publish some.</div>`;
-    else shuffle(products).slice(0, 8).forEach(p => container.appendChild(createProductCard(p, products)));
+    else shuffle(products).slice(0, 8).forEach(p => container.appendChild(createProductCard(p)));
   }
 
   // 3. CATALOG PAGE (PRODUCTS)
@@ -312,7 +332,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       container.innerHTML = '';
       if (!result.length) container.innerHTML = `<div class="col-span-full text-center py-12 text-outline bg-surface-container-low rounded-xl">No reviews found.</div>`;
-      else result.forEach(p => container.appendChild(createProductCard(p, products)));
+      else result.forEach(p => container.appendChild(createProductCard(p)));
     }
     
     if (searchInput) searchInput.addEventListener('input', renderGrid);
@@ -326,12 +346,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!slug) return;
 
     const products = await loadProducts();
-    const product = products.find(p => {
-      const sameName = products.filter(other => other.name.toLowerCase() === p.name.toLowerCase());
-      let generatedSlug = p.name.toLowerCase().replace(/\s+/g, '-');
-      if (sameName.length > 1 && p.color) generatedSlug += '-' + p.color.toLowerCase().replace(/\s+/g, '-');
-      return generatedSlug === slug;
-    });
+    const product = products.find(p => p.name.toLowerCase().replace(/\s+/g, '-') === slug);
 
     if (!product) {
       document.getElementById('product-name').textContent = "Review Not Found";
@@ -340,19 +355,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.title = product.name + " Review | The Geek Shop";
     document.getElementById('product-name').textContent = product.name;
-    document.getElementById('product-price').innerHTML = `<span class="material-symbols-outlined text-3xl align-middle">star</span> ${product.score || 'N/A'}/10 Score`;
+    document.getElementById('product-score-stars').innerHTML = generateStarsHTML(product.score);
+    document.getElementById('product-price').textContent = product.price || '';
     document.getElementById('product-meta-desc').textContent = product.metaDescription || product.description;
     document.getElementById('product-detailed-desc').innerHTML = product.detailedDescription || "No detailed review provided.";
     
     if (product.images && product.images.length > 0) {
       document.getElementById('main-image').src = product.images[0];
-      const thumbGal = document.getElementById('thumbnail-gallery');
-      thumbGal.innerHTML = product.images.map(img => `
-        <img src="${img}" class="aspect-square rounded-lg object-cover cursor-pointer border border-transparent hover:border-primary transition-all" onclick="document.getElementById('main-image').src='${img}'">
-      `).join('');
     }
 
-    const specs = parseSpecsData(product.specs);
+    // Build Specifications Block
+    const specs = parseDataList(product.specs);
     const specsGrid = document.getElementById('product-specs-grid');
     if (Object.keys(specs).length > 0) {
       specsGrid.innerHTML = Object.entries(specs).map(([k, v]) => `
@@ -365,44 +378,87 @@ document.addEventListener('DOMContentLoaded', async () => {
       specsGrid.innerHTML = `<span class="text-outline">No specs provided.</span>`;
     }
 
+    // Build Sub-scores Block
+    const subscores = parseDataList(product.subScores);
+    const subscoresGrid = document.getElementById('subscores-grid');
+    if (Object.keys(subscores).length > 0) {
+      document.getElementById('subscores-wrapper').classList.remove('hidden');
+      subscoresGrid.innerHTML = Object.entries(subscores).map(([k, v]) => `
+        <div class="bg-surface-container-low border border-white/5 p-4 rounded-xl flex justify-between items-center">
+          <span class="text-outline font-bold text-sm uppercase tracking-widest">${k}</span>
+          <span class="text-primary font-mono font-bold">${v}</span>
+        </div>
+      `).join('');
+    }
+
+    // Build Pros & Cons
     const proConSection = document.getElementById('pros-cons-section');
     if (product.pros?.length || product.cons?.length) {
-      let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">`;
-      html += `<div class="bg-green-500/10 border border-green-500/20 rounded-xl p-6">
-                <h3 class="text-green-400 font-bold mb-4 flex items-center gap-2"><span class="material-symbols-outlined">check_circle</span> Pros</h3>
-                <ul class="space-y-2 text-sm text-on-surface">` + 
+      let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">`;
+      html += `<div class="bg-green-500/10 border border-green-500/20 rounded-xl p-8">
+                <h3 class="text-green-400 font-bold mb-4 flex items-center gap-2 text-xl"><span class="material-symbols-outlined">check_circle</span> Pros</h3>
+                <ul class="space-y-3 text-on-surface">` + 
                 (product.pros || []).map(p => `<li>• ${p}</li>`).join('') + `</ul></div>`;
                 
-      html += `<div class="bg-red-500/10 border border-red-500/20 rounded-xl p-6">
-                <h3 class="text-red-400 font-bold mb-4 flex items-center gap-2"><span class="material-symbols-outlined">cancel</span> Cons</h3>
-                <ul class="space-y-2 text-sm text-on-surface">` + 
+      html += `<div class="bg-red-500/10 border border-red-500/20 rounded-xl p-8">
+                <h3 class="text-red-400 font-bold mb-4 flex items-center gap-2 text-xl"><span class="material-symbols-outlined">cancel</span> Cons</h3>
+                <ul class="space-y-3 text-on-surface">` + 
                 (product.cons || []).map(c => `<li>• ${c}</li>`).join('') + `</ul></div></div>`;
-                
-      if (product.verdict) {
-         html += `<div class="bg-surface-container-high rounded-xl p-6 border border-primary/20">
-                    <h3 class="text-primary font-bold mb-2 uppercase tracking-widest text-sm">Final Verdict</h3>
-                    <p class="text-on-surface-variant leading-relaxed italic">"${product.verdict}"</p>
-                  </div>`;
-      }
       proConSection.innerHTML = html;
     }
 
+    // Final Verdict & Author Box
+    const verdictContainer = document.getElementById('verdict-container');
+    if (product.verdict) {
+      verdictContainer.innerHTML = `
+        <div class="bg-surface-container-high rounded-2xl p-8 border border-primary/20 h-full flex flex-col justify-center">
+          <h3 class="text-primary font-bold mb-4 uppercase tracking-widest text-sm flex items-center gap-2"><span class="material-symbols-outlined">gavel</span> Final Verdict</h3>
+          <p class="text-on-surface leading-relaxed text-xl font-display">"${product.verdict}"</p>
+        </div>`;
+    }
+    
+    const authorContainer = document.getElementById('author-container');
+    if (product.authorName) {
+      authorContainer.innerHTML = `
+        <div class="bg-surface-container-low rounded-2xl p-8 border border-white/5 h-full flex flex-col justify-center items-center text-center">
+          <div class="w-16 h-16 bg-surface-variant rounded-full mb-4 flex items-center justify-center text-primary text-2xl font-bold font-display uppercase border border-primary/20">
+            ${product.authorName.charAt(0)}
+          </div>
+          <p class="text-xs uppercase tracking-widest text-outline mb-1">Reviewed By</p>
+          <h4 class="text-lg font-bold text-on-surface mb-2">${product.authorName}</h4>
+          ${product.authorUrl ? `<a href="${product.authorUrl}" target="_blank" class="text-sm text-primary hover:underline">Follow Author</a>` : ''}
+        </div>`;
+    }
+
+    // Side-by-side Merchant Links
     const orderRow = document.getElementById('order-row');
     if (product.merchants && product.merchants.length > 0) {
-      orderRow.innerHTML = '<h4 class="text-xs font-bold uppercase tracking-widest text-outline mb-2">Check Prices:</h4>' + product.merchants.map(m => {
+      orderRow.innerHTML = product.merchants.map(m => {
         const parts = m.split('|');
         return `
-          <a href="${parts[1] || '#'}" target="_blank" class="w-full flex justify-between items-center bg-surface-container-high hover:bg-surface-variant border border-white/10 hover:border-primary/50 transition-all rounded-xl p-4 group">
-            <span class="font-bold font-display group-hover:text-primary transition-colors">${parts[0] || 'Store'}</span>
-            <div class="flex items-center gap-4">
-              <span class="text-primary font-mono text-sm">${parts[2] || 'Check Price'}</span>
-              <span class="material-symbols-outlined text-outline group-hover:text-white transition-colors">open_in_new</span>
-            </div>
+          <a href="${parts[1] || '#'}" target="_blank" class="flex-shrink-0 flex items-center gap-2 bg-surface-container hover:bg-surface-variant border border-white/10 hover:border-primary/50 transition-all rounded-lg px-5 py-2.5 group">
+            <span class="font-bold font-display text-sm group-hover:text-primary transition-colors">${parts[0] || 'Store'}</span>
+            <span class="material-symbols-outlined text-outline text-sm group-hover:text-white transition-colors">shopping_cart</span>
           </a>
         `;
       }).join('');
     } else {
-      orderRow.innerHTML = '<div class="p-4 bg-surface-container rounded-xl text-center text-outline text-sm border border-white/5">No active listings available.</div>';
+      orderRow.innerHTML = '<div class="px-4 py-2 bg-surface-container rounded-lg text-outline text-sm border border-white/5">No active listings available.</div>';
+    }
+
+    // Inject 4 Similar Products Based on Category (or fallback to newest)
+    const similarContainer = document.getElementById('similar-grid');
+    let similar = products.filter(p => p.id !== product.id && p.category === product.category);
+    if (similar.length < 4) {
+      // Pad with other recent items if category doesn't have enough
+      const others = products.filter(p => p.id !== product.id && p.category !== product.category);
+      similar = [...similar, ...others];
+    }
+    similar = similar.slice(0, 4); // Take exactly up to 4
+    if(similar.length > 0) {
+      similar.forEach(p => similarContainer.appendChild(createProductCard(p)));
+    } else {
+      similarContainer.innerHTML = '<span class="text-outline">No other reviews yet.</span>';
     }
   }
 });
