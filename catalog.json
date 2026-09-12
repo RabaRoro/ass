@@ -24,5 +24,34 @@
     ],
     "hotDeal": false,
     "timestamp": 1789202774843
+  },
+  {
+    "id": "1789204305266",
+    "name": "lala",
+    "category": "Keyboards",
+    "price": "5200",
+    "score": "9",
+    "pros": [
+      "asdf"
+    ],
+    "cons": [
+      "asdf"
+    ],
+    "verdict": "asdf",
+    "description": "asda",
+    "metaDescription": "asdfasd",
+    "detailedDescription": "asdfasdfasdf",
+    "specs": "asdf",
+    "subScores": "asdfasdf",
+    "images": [
+      "asdfadf"
+    ],
+    "merchants": [
+      "asdf"
+    ],
+    "authorName": "asdf",
+    "authorUrl": "asdf",
+    "hotDeal": false,
+    "timestamp": 1789204305266
   }
 ]
