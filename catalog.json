@@ -1,5 +1,73 @@
 [
   {
+    "id": "1789204610554",
+    "name": "AULA F75 Pro",
+    "category": "Keyboard and Mouse",
+    "price": "৳5,200 - ৳5,500",
+    "score": "9.4",
+    "pros": [
+      "Exceptional creamy/thocky sound profile out of the box",
+      "Smooth, factory-lubricated linear switches",
+      "Flexible leaf-spring gasket mount structure",
+      "Versatile tri-mode connectivity (2.4G, Bluetooth, Wired)",
+      "Long-lasting 4000mAh battery capacity",
+      "Full-key hot-swappable PCB support"
+    ],
+    "cons": [
+      "Weighing over 1kg, it isn't ideal for ultra-light portable travel",
+      "Companion configuration software can feel unintuitive",
+      "75% layout lacks a dedicated numpad for specialized data entry"
+    ],
+    "verdict": "The AULA F75 Pro is arguably one of the absolute best pre-built mechanical keyboard values available today. By providing luxury features like a gasket structure, multi-layer acoustic dampening, and pre-lubed switches at an affordable price, it delivers a custom-tier typing and gaming experience that is hard to beat.",
+    "description": "Discover the AULA F75 Pro, a budget-friendly 75% tri-mode mechanical keyboard featuring a leaf-spring gasket mount, 5-layer internal dampening, and factory-lubed switches.",
+    "metaDescription": "The AULA F75 Pro redefines value in the mechanical keyboard space, delivering custom-level creamy acoustics, incredible out-of-the-box performance, and wireless flexibility without breaking the bank.",
+    "detailedDescription": "The AULA F75 Pro has quickly dominated the entry-to-mid-range mechanical keyboard scene, challenging the notion that you need to spend hundreds of dollars to get a custom-tier typing experience. Right out of the box, it hits the sweet spot between premium performance, rich acoustics, and modern aesthetics.\n\nDesign, Layout, and Build Quality\nThe keyboard adopts a space-saving 75% compact layout containing 81 keys. It successfully retains essential arrow keys, navigation columns, and a function row while saving valuable desk space for unhindered mouse movement. Built with a sturdy, high-grade plastic chassis, the board boasts a surprisingly weighty 1023g footprint that keeps it firmly planted on your desk during intense gaming marathons or furious typing sessions. An integrated, multi-functional metal volume knob sits neatly in the top right corner, offering tactile, precise volume control without cluttering your workflow.\n\nAcoustic Engineering and Typing Experience\nWhat truly sets the F75 Pro apart is its sound profile, often described by enthusiasts as deeply \"thocky\" and \"creamy.\" AULA achieves this using a leaf-spring gasket structure that offers a cushioned, flex-friendly typing feel, drastically minimizing finger fatigue. Internally, the board features a comprehensive five-layer sound-dampening system—including double-layer Poron foam, an IXPE switch pad, a PET sound enhancement layer, and a bottom silicone dampener. This multi-layered approach completely eliminates hollow echoes, producing a remarkably clean, satisfying acoustic dampening signature right out of the box.\n\nSwitches, Keycaps, and Performance\nUnder the hood, the F75 Pro comes pre-installed with factory-lubricated LEOBOG Reaper linear switches. These switches offer a smooth, friction-free actuation with a 45g operating force. If you prefer a different tactile or clicky sensation later on, the board features full-key hot-swappable sockets compatible with both 3-pin and 5-pin switches, requiring zero soldering. Topping it off are durable, textured dual-tone PBT keycaps (often styled with gradient colorways and side-printed legends) that resist finger oils and shine over time, brilliantly illuminated by vibrant, customizable 16.8 million color south-facing RGB backlighting.\n\nConnectivity and Battery Life\nVersatility is a core strength of the F75 Pro, offering reliable tri-mode connectivity: ultra-responsive 2.4GHz wireless via a stowable USB receiver, Bluetooth 5.0 for multi-device pairing, and a traditional USB Type-C wired connection. Powering this robust wireless setup is a large 4000mAh rechargeable battery, providing weeks of productivity or multiple days of intense gaming on a single charge depending on your RGB brightness settings.",
+    "specs": "Brand: AULA\nModel: F75 Pro\nLayout: 75% Compact (81 Keys)\nMounting Structure: Leaf-Spring Gasket Mount\nSwitch Type: Factory-Lubed Mechanical Linear\nHot-Swap Support: Yes (3-pin and 5-pin compatible)\nConnectivity: Bluetooth 5.0 / 2.4GHz Wireless / USB-C Wired\nBattery Capacity: 4000mAh\nKeycaps: OEM Profile Dual-Tone PBT\nBacklight: 16.8 Million Color RGB\nWeight: Approx. 1023g\nWarranty: 1 Year",
+    "subScores": "Build Quality: 9/10\nTyping Feel & Acoustics: 10/10\nBattery Life: 9/10\nValue for Money: 10/10\nSoftware & Customization: 8/10",
+    "images": [
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcy9jkylECAkcSyXfix-NiZyDUJHTW9QSoNPTjwIgV4ky0hKddqnngrUQ&s=10"
+    ],
+    "merchants": [
+      "Tech Diversity|https://techdiversitybd.com/aula-f75-wireless-mechanical-keyboard/",
+      "Tech Land BD|https://www.techlandbd.com/aula-f75-pro-tri-mode-wireless-black-gradient-mechanical-keyboard",
+      "VibeGaming|https://vibegaming.com.bd/product/aula-f75-pro-gasket-three-mode-mechanical-keyboard-white-blue-gradient-bluecloud-blue-reaper-switch/"
+    ],
+    "authorName": "alu",
+    "authorImg": "",
+    "authorSocials": [],
+    "hotDeal": false,
+    "timestamp": 1789206168361
+  },
+  {
+    "id": "1789204305266",
+    "name": "lala",
+    "category": "Keyboards",
+    "price": "5200",
+    "score": "9",
+    "pros": [
+      "asdf"
+    ],
+    "cons": [
+      "asdf"
+    ],
+    "verdict": "asdf",
+    "description": "asda",
+    "metaDescription": "asdfasd",
+    "detailedDescription": "asdfasdfasdf",
+    "specs": "asdf",
+    "subScores": "asdfasdf",
+    "images": [
+      "asdfadf"
+    ],
+    "merchants": [
+      "asdf"
+    ],
+    "authorName": "asdf",
+    "authorUrl": "asdf",
+    "hotDeal": false,
+    "timestamp": 1789204305266
+  },
+  {
     "id": "1789205217250",
     "name": "Ajazz AK820 Pro",
     "category": "Keyboards",
@@ -34,72 +102,5 @@
     "authorUrl": "alu",
     "hotDeal": false,
     "timestamp": 1789205217250
-  },
-  {
-    "id": "1789204305266",
-    "name": "lala",
-    "category": "Keyboards",
-    "price": "5200",
-    "score": "9",
-    "pros": [
-      "asdf"
-    ],
-    "cons": [
-      "asdf"
-    ],
-    "verdict": "asdf",
-    "description": "asda",
-    "metaDescription": "asdfasd",
-    "detailedDescription": "asdfasdfasdf",
-    "specs": "asdf",
-    "subScores": "asdfasdf",
-    "images": [
-      "asdfadf"
-    ],
-    "merchants": [
-      "asdf"
-    ],
-    "authorName": "asdf",
-    "authorUrl": "asdf",
-    "hotDeal": false,
-    "timestamp": 1789204305266
-  },
-  {
-    "id": "1789204610554",
-    "name": "AULA F75 Pro",
-    "category": "Keyboards",
-    "price": "৳5,200 - ৳5,500",
-    "score": "9.4",
-    "pros": [
-      "Exceptional creamy/thocky sound profile out of the box",
-      "Smooth, factory-lubricated linear switches",
-      "Flexible leaf-spring gasket mount structure",
-      "Versatile tri-mode connectivity (2.4G, Bluetooth, Wired)",
-      "Long-lasting 4000mAh battery capacity",
-      "Full-key hot-swappable PCB support"
-    ],
-    "cons": [
-      "Weighing over 1kg, it isn't ideal for ultra-light portable travel",
-      "Companion configuration software can feel unintuitive",
-      "75% layout lacks a dedicated numpad for specialized data entry"
-    ],
-    "verdict": "The AULA F75 Pro is arguably one of the absolute best pre-built mechanical keyboard values available today. By providing luxury features like a gasket structure, multi-layer acoustic dampening, and pre-lubed switches at an affordable price, it delivers a custom-tier typing and gaming experience that is hard to beat.",
-    "description": "Discover the AULA F75 Pro, a budget-friendly 75% tri-mode mechanical keyboard featuring a leaf-spring gasket mount, 5-layer internal dampening, and factory-lubed switches.",
-    "metaDescription": "The AULA F75 Pro redefines value in the mechanical keyboard space, delivering custom-level creamy acoustics, incredible out-of-the-box performance, and wireless flexibility without breaking the bank.",
-    "detailedDescription": "The AULA F75 Pro has quickly dominated the entry-to-mid-range mechanical keyboard scene, challenging the notion that you need to spend hundreds of dollars to get a custom-tier typing experience. Right out of the box, it hits the sweet spot between premium performance, rich acoustics, and modern aesthetics.\n\nDesign, Layout, and Build Quality\nThe keyboard adopts a space-saving 75% compact layout containing 81 keys. It successfully retains essential arrow keys, navigation columns, and a function row while saving valuable desk space for unhindered mouse movement. Built with a sturdy, high-grade plastic chassis, the board boasts a surprisingly weighty 1023g footprint that keeps it firmly planted on your desk during intense gaming marathons or furious typing sessions. An integrated, multi-functional metal volume knob sits neatly in the top right corner, offering tactile, precise volume control without cluttering your workflow.\n\nAcoustic Engineering and Typing Experience\nWhat truly sets the F75 Pro apart is its sound profile, often described by enthusiasts as deeply \"thocky\" and \"creamy.\" AULA achieves this using a leaf-spring gasket structure that offers a cushioned, flex-friendly typing feel, drastically minimizing finger fatigue. Internally, the board features a comprehensive five-layer sound-dampening system—including double-layer Poron foam, an IXPE switch pad, a PET sound enhancement layer, and a bottom silicone dampener. This multi-layered approach completely eliminates hollow echoes, producing a remarkably clean, satisfying acoustic dampening signature right out of the box.\n\nSwitches, Keycaps, and Performance\nUnder the hood, the F75 Pro comes pre-installed with factory-lubricated LEOBOG Reaper linear switches. These switches offer a smooth, friction-free actuation with a 45g operating force. If you prefer a different tactile or clicky sensation later on, the board features full-key hot-swappable sockets compatible with both 3-pin and 5-pin switches, requiring zero soldering. Topping it off are durable, textured dual-tone PBT keycaps (often styled with gradient colorways and side-printed legends) that resist finger oils and shine over time, brilliantly illuminated by vibrant, customizable 16.8 million color south-facing RGB backlighting.\n\nConnectivity and Battery Life\nVersatility is a core strength of the F75 Pro, offering reliable tri-mode connectivity: ultra-responsive 2.4GHz wireless via a stowable USB receiver, Bluetooth 5.0 for multi-device pairing, and a traditional USB Type-C wired connection. Powering this robust wireless setup is a large 4000mAh rechargeable battery, providing weeks of productivity or multiple days of intense gaming on a single charge depending on your RGB brightness settings.",
-    "specs": "Brand: AULA\nModel: F75 Pro\nLayout: 75% Compact (81 Keys)\nMounting Structure: Leaf-Spring Gasket Mount\nSwitch Type: Factory-Lubed Mechanical Linear\nHot-Swap Support: Yes (3-pin and 5-pin compatible)\nConnectivity: Bluetooth 5.0 / 2.4GHz Wireless / USB-C Wired\nBattery Capacity: 4000mAh\nKeycaps: OEM Profile Dual-Tone PBT\nBacklight: 16.8 Million Color RGB\nWeight: Approx. 1023g\nWarranty: 1 Year",
-    "subScores": "Build Quality: 9/10\nTyping Feel & Acoustics: 10/10\nBattery Life: 9/10\nValue for Money: 10/10\nSoftware & Customization: 8/10",
-    "images": [
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcy9jkylECAkcSyXfix-NiZyDUJHTW9QSoNPTjwIgV4ky0hKddqnngrUQ&s=10"
-    ],
-    "merchants": [
-      "Tech Diversity|https://techdiversitybd.com/aula-f75-wireless-mechanical-keyboard/",
-      "Tech Land BD|https://www.techlandbd.com/aula-f75-pro-tri-mode-wireless-black-gradient-mechanical-keyboard",
-      "VibeGaming|https://vibegaming.com.bd/product/aula-f75-pro-gasket-three-mode-mechanical-keyboard-white-blue-gradient-bluecloud-blue-reaper-switch/"
-    ],
-    "authorName": "alu",
-    "authorUrl": "alu",
-    "hotDeal": false,
-    "timestamp": 1789204790802
   }
 ]
