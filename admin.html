@@ -66,18 +66,25 @@
             <div class="xl:col-span-2"><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Post Title</label><input id="p-name" required class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2"></div>
             <div><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Category</label>
               <select id="p-category" required class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2">
-                <option value="" disabled selected>Select...</option><option value="Keyboards">Keyboards</option><option value="Keycaps">Keycaps</option><option value="Switches">Switches</option><option value="Accessories">Accessories</option>
+                <option value="" disabled selected>Select...</option>
+                <option value="Keyboard and Mouse">Keyboard and Mouse</option>
+                <option value="Switches">Switches</option>
+                <option value="Keycaps">Keycaps</option>
+                <option value="Accessories and Collectables">Accessories and Collectables</option>
               </select>
             </div>
-            <div><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Price</label><input id="p-price" placeholder="e.g. $120.00" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2"></div>
-            <div><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Score (0-10)</label><input type="number" id="p-score" step="0.1" max="10" required class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2"></div>
+            <div><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Price (e.g. 2500 BDT or $50)</label><input id="p-price" placeholder="e.g. 3500 BDT" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2"></div>
+            <div>
+              <label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Fallback Manual Score</label>
+              <input type="number" id="p-score" step="0.1" max="10" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2" placeholder="Auto-calculated if subscores added">
+            </div>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 bg-surface-container-low rounded-xl border border-white/5">
             <div class="space-y-4">
               <div><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Card Description (Short)</label><textarea id="p-desc" rows="2" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2"></textarea></div>
               <div><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Hero Summary / Meta</label><textarea id="p-meta-desc" rows="2" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2"></textarea></div>
-              <div><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Image URL (Just 1 Big Image)</label><input id="p-images" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2" placeholder="https://..."></div>
+              <div><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Image URL (Main Big Image)</label><input id="p-images" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2" placeholder="https://..."></div>
             </div>
             <div class="lg:col-span-2"><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Detailed Review (HTML Supported)</label><textarea id="p-detailed-desc" rows="11" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2"></textarea></div>
           </div>
@@ -89,21 +96,26 @@
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-surface-container-low rounded-xl border border-white/5">
             <div><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Specs (Key: Value)</label><textarea id="p-specs" rows="4" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2" placeholder="Switch: Linear&#10;Hotswap: Yes"></textarea></div>
-            <div><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Sub-Scores (Name: 9/10)</label><textarea id="p-subscores" rows="4" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2" placeholder="Functionality: 9/10&#10;Durability: 8/10"></textarea></div>
+            <div><label class="block text-xs uppercase tracking-widest text-primary mb-1.5">Sub-Scores (Name: 9/10)</label><textarea id="p-subscores" rows="4" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2" placeholder="Functionality: 9/10&#10;Durability: 8/10&#10;Software: 10/10"></textarea></div>
             <div>
               <label class="block text-xs uppercase tracking-widest text-outline mb-1.5 flex justify-between">
-                <span>Buy Links</span><span class="text-primary text-[10px] normal-case">(Name [space] [space] URL)</span>
+                <span>Buy Links</span><span class="text-primary text-[10px] normal-case">(Name [space][space] URL)</span>
               </label>
               <textarea id="p-merchants" rows="4" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2" placeholder="Amazon  https://amazon.com/..."></textarea>
-              <p class="text-[10px] text-outline mt-1">*Double space after name automatically inserts the '|' separator.</p>
             </div>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 bg-surface-container-low rounded-xl border border-white/5 items-start">
-            <div class="lg:col-span-2"><label class="block text-xs uppercase tracking-widest text-primary mb-1.5">Final Verdict</label><textarea id="p-verdict" rows="3" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2"></textarea></div>
-            <div class="space-y-4">
+            <div class="lg:col-span-1"><label class="block text-xs uppercase tracking-widest text-primary mb-1.5">Final Verdict</label><textarea id="p-verdict" rows="5" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2"></textarea></div>
+            <div class="space-y-3">
               <div><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Author Name</label><input id="p-author-name" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2"></div>
-              <div><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Author Social/URL</label><input id="p-author-url" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2"></div>
+              <div><label class="block text-xs uppercase tracking-widest text-outline mb-1.5">Author Avatar Image URL</label><input id="p-author-img" placeholder="https://..." class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2"></div>
+            </div>
+            <div>
+              <label class="block text-xs uppercase tracking-widest text-outline mb-1.5 flex justify-between">
+                <span>Author Social Links</span><span class="text-primary text-[10px] normal-case">(Platform [space][space] URL)</span>
+              </label>
+              <textarea id="p-author-socials" rows="5" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2" placeholder="Twitter  https://twitter.com/username&#10;YouTube  https://youtube.com/..."></textarea>
             </div>
           </div>
 
