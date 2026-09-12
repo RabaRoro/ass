@@ -1,68 +1,35 @@
 [
   {
-    "id": "1789205217250",
-    "name": "Ajazz AK820 Pro",
-    "category": "Keyboards",
-    "price": "৳4,500 - ৳4,900",
-    "score": "9.2",
+    "id": "1789206228209",
+    "name": "asd",
+    "category": "Keyboard and Mouse",
+    "price": "asdasd",
+    "score": "",
     "pros": [
-      "Built-in customizable TFT color screen for stats and GIFs",
-      "True gasket mount structure with a soft, flex-friendly typing feel",
-      "Smooth, factory-lubricated linear switches out of the box",
-      "Reliable tri-mode connectivity (2.4G wireless, Bluetooth, and wired)",
-      "Incredible feature-to-price ratio"
+      "asdas"
     ],
     "cons": [
-      "Companion software for uploading custom screen GIFs can be unintuitive",
-      "Plastic chassis feels a bit lightweight compared to heavy aluminum builds",
-      "OEM profile keycaps may require a slight adjustment period"
+      "dasdasd"
     ],
-    "verdict": "The Ajazz AK820 Pro stands out in a crowded market by offering luxury touches like a functional TFT smart display and gasket structure at a very low price. If you want a unique aesthetic and great sound without spending a fortune, this is a phenomenal option.",
-    "description": "Explore the Ajazz AK820 Pro, a 75% gasket-mounted mechanical keyboard featuring a built-in TFT smart display, tri-mode connectivity, and factory-lubed switches.",
-    "metaDescription": "The Ajazz AK820 Pro redefines budget features by packing a customizable TFT smart screen, a true gasket mounting structure, and multi-layer dampening into an affordable 75% frame.",
-    "detailedDescription": "",
-    "specs": "Brand: Ajazz\nModel: AK820 Pro\nLayout: 75% Compact (82 Keys + TFT Screen + Knob)\nMounting Structure: Gasket-Mounted\nSwitch Type: Factory-Lubed Linear (Hot-Swappable)\nConnectivity: Bluetooth / 2.4GHz Wireless / USB-C Wired\nBattery Capacity: 4000mAh\nKeycaps: OEM Profile PBT\nBacklight: South-Facing RGB\nWeight: Approx. 810g\nWarranty: 1 Year",
-    "subScores": "Build Quality: 8.5/10\nTyping Feel & Acoustics: 9/10\nFeatures & Display: 9.5/10\nValue for Money: 9.5/10",
+    "verdict": "asdasd",
+    "description": "asdasd",
+    "metaDescription": "asdasd",
+    "detailedDescription": "asdasd",
+    "specs": "asd:a",
+    "subScores": "as:1",
     "images": [
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDPDBrjDt9X2WK72kQ0bEjAGMeNuzr2M7Gdgtc4fRmCV2u77aJm0YXAtPu&s=10"
+      "asdasd"
     ],
     "merchants": [
-      "Tech Diversity|https://techdiversitybd.com/",
-      "Star Tech|https://www.startech.bd/"
+      "asdasd"
     ],
-    "authorName": "Alu",
-    "authorUrl": "alu",
+    "authorName": "asdasd",
+    "authorImg": "asdasd",
+    "authorSocials": [
+      "asd asd"
+    ],
     "hotDeal": false,
-    "timestamp": 1789205217250
-  },
-  {
-    "id": "1789204305266",
-    "name": "lala",
-    "category": "Keyboards",
-    "price": "5200",
-    "score": "9",
-    "pros": [
-      "asdf"
-    ],
-    "cons": [
-      "asdf"
-    ],
-    "verdict": "asdf",
-    "description": "asda",
-    "metaDescription": "asdfasd",
-    "detailedDescription": "asdfasdfasdf",
-    "specs": "asdf",
-    "subScores": "asdfasdf",
-    "images": [
-      "asdfadf"
-    ],
-    "merchants": [
-      "asdf"
-    ],
-    "authorName": "asdf",
-    "authorUrl": "asdf",
-    "hotDeal": false,
-    "timestamp": 1789204305266
+    "timestamp": 1789206228209
   },
   {
     "id": "1789204610554",
@@ -104,35 +71,100 @@
     "timestamp": 1789206168361
   },
   {
-    "id": "1789206228209",
-    "name": "asd",
-    "category": "Keyboard and Mouse",
-    "price": "asdasd",
-    "score": "",
+    "id": "1789204305266",
+    "name": "lala",
+    "category": "Keyboards",
+    "price": "5200",
+    "score": "9",
     "pros": [
-      "asdas"
+      "asdf"
     ],
     "cons": [
-      "dasdasd"
+      "asdf"
     ],
-    "verdict": "asdasd",
-    "description": "asdasd",
-    "metaDescription": "asdasd",
-    "detailedDescription": "asdasd",
-    "specs": "asd:a",
-    "subScores": "as:1",
+    "verdict": "asdf",
+    "description": "asda",
+    "metaDescription": "asdfasd",
+    "detailedDescription": "asdfasdfasdf",
+    "specs": "asdf",
+    "subScores": "asdfasdf",
     "images": [
-      "asdasd"
+      "asdfadf"
     ],
     "merchants": [
-      "asdasd"
+      "asdf"
     ],
-    "authorName": "asdasd",
-    "authorImg": "asdasd",
-    "authorSocials": [
-      "asd asd"
-    ],
+    "authorName": "asdf",
+    "authorUrl": "asdf",
     "hotDeal": false,
-    "timestamp": 1789206228209
+    "timestamp": 1789204305266
+  },
+  {
+    "id": "1789205217250",
+    "name": "Ajazz AK820 Pro",
+    "category": "Keyboards",
+    "price": "৳4,500 - ৳4,900",
+    "score": "9.2",
+    "pros": [
+      "Built-in customizable TFT color screen for stats and GIFs",
+      "True gasket mount structure with a soft, flex-friendly typing feel",
+      "Smooth, factory-lubricated linear switches out of the box",
+      "Reliable tri-mode connectivity (2.4G wireless, Bluetooth, and wired)",
+      "Incredible feature-to-price ratio"
+    ],
+    "cons": [
+      "Companion software for uploading custom screen GIFs can be unintuitive",
+      "Plastic chassis feels a bit lightweight compared to heavy aluminum builds",
+      "OEM profile keycaps may require a slight adjustment period"
+    ],
+    "verdict": "The Ajazz AK820 Pro stands out in a crowded market by offering luxury touches like a functional TFT smart display and gasket structure at a very low price. If you want a unique aesthetic and great sound without spending a fortune, this is a phenomenal option.",
+    "description": "Explore the Ajazz AK820 Pro, a 75% gasket-mounted mechanical keyboard featuring a built-in TFT smart display, tri-mode connectivity, and factory-lubed switches.",
+    "metaDescription": "The Ajazz AK820 Pro redefines budget features by packing a customizable TFT smart screen, a true gasket mounting structure, and multi-layer dampening into an affordable 75% frame.",
+    "detailedDescription": "",
+    "specs": "Brand: Ajazz\nModel: AK820 Pro\nLayout: 75% Compact (82 Keys + TFT Screen + Knob)\nMounting Structure: Gasket-Mounted\nSwitch Type: Factory-Lubed Linear (Hot-Swappable)\nConnectivity: Bluetooth / 2.4GHz Wireless / USB-C Wired\nBattery Capacity: 4000mAh\nKeycaps: OEM Profile PBT\nBacklight: South-Facing RGB\nWeight: Approx. 810g\nWarranty: 1 Year",
+    "subScores": "Build Quality: 8.5/10\nTyping Feel & Acoustics: 9/10\nFeatures & Display: 9.5/10\nValue for Money: 9.5/10",
+    "images": [
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDPDBrjDt9X2WK72kQ0bEjAGMeNuzr2M7Gdgtc4fRmCV2u77aJm0YXAtPu&s=10"
+    ],
+    "merchants": [
+      "Tech Diversity|https://techdiversitybd.com/",
+      "Star Tech|https://www.startech.bd/"
+    ],
+    "authorName": "Alu",
+    "authorUrl": "alu",
+    "hotDeal": false,
+    "timestamp": 1789205217250
+  },
+  {
+    "id": "1789212938346",
+    "name": "lala",
+    "category": "Keyboards",
+    "price": "1000",
+    "score": "0",
+    "pros": [
+      "asdf"
+    ],
+    "cons": [
+      "asdf"
+    ],
+    "verdict": "asdf",
+    "description": "sdf",
+    "metaDescription": "asdf",
+    "detailedDescription": "asdf",
+    "specs": "asdf",
+    "subScores": "asdf",
+    "images": [
+      "asdf"
+    ],
+    "merchants": [
+      "asdf"
+    ],
+    "authorName": "awdf",
+    "authorImage": "asdf",
+    "authorSocials": [
+      "asdf"
+    ],
+    "hotDeal": true,
+    "timestamp": 1789212938346
   }
 ]
