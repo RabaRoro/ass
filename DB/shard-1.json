@@ -30,5 +30,46 @@
     ],
     "hotDeal": true,
     "timestamp": 1789213053810
+  },
+  {
+    "id": "1789214032400",
+    "name": "AULA F75 Pro",
+    "category": "Keyboards",
+    "price": "৳6,100 - ৳6,800",
+    "score": "9.6",
+    "pros": [
+      "Full numeric keypad integrated into a compact, space-saving 96% layout",
+      "Staggering 8000mAh battery delivers unmatched wireless endurance",
+      "Advanced five-layer sound dampening creates a clean, deep thocky acoustic profile",
+      "Smooth, factory-lubricated linear switches provide great typing feel out of the box",
+      "Reliable tri-mode connectivity (Bluetooth, 2.4G wireless, and wired USB-C)",
+      "Full-key hot-swappable PCB supports easy custom switch modifications"
+    ],
+    "cons": [
+      "Heavier weight and dense footprint make it less ideal for frequent travel or backpack carry",
+      "96% clustered layout requires a brief adjustment period to avoid hitting adjacent keys",
+      "Default companion software utility has a learning curve for deep configuration"
+    ],
+    "verdict": "The AULA F99 is the ultimate endgame keyboard for anyone who refuses to sacrifice a numeric keypad but demands the lush acoustics, flex, and wireless freedom of modern custom boards. With its monstrous 8000mAh battery, immaculate five-layer acoustic tuning, and smooth pre-lubed switches, the F99 represents exceptional value and an elite daily driver for work and play.",
+    "description": "Explore the AULA F99, an expansive 96% layout tri-mode mechanical keyboard equipped with a massive 8000mAh battery, gasket mounting, and 5-layer acoustic dampening.",
+    "metaDescription": "The AULA F99 combines the convenience of an integrated numeric keypad with high-end gasket structure engineering, endless battery life, and ultra-smooth linear switches, making it the definitive productivity and gaming beast.",
+    "detailedDescription": "",
+    "specs": "Brand: AULA\nModel: F99\nLayout: 96% Compact (99 Keys with Numpad)\nMounting Structure: Gasket-Mounted with Slotted PCB\nSwitch Type: Factory-Lubed Linear (Gray Wood V3 / Hot-Swappable)\nConnectivity: Bluetooth / 2.4GHz Wireless / USB-C Wired\nBattery Capacity: 8000mAh Ultra-High Capacity\nBacklight: 16.8 Million Color RGB\nWeight: Approx. 1180g\nWarranty: 1 Year",
+    "subScores": "Build Quality: 9.5/10\nTyping Feel & Acoustics: 9.5/10\nBattery Life & Wireless: 10/10\nValue for Money: 9.5/10",
+    "images": [
+      "https://aulagear.com/cdn/shop/files/203A5822.jpg?crop=center&height=2048&v=1734921227&width=2048"
+    ],
+    "merchants": [
+      "Tech Diversity|https://techdiversitybd.com/aula-f99-gasket-tri-mode-mechanical-keyboard/",
+      "Vibe Gaming|https://vibegaming.com.bd/product/aula-f99-tri-mode-gray-wood-v3-switch-mechanical-gaming-keyboard-black-white/"
+    ],
+    "authorName": "alu",
+    "authorImage": "https://www.alimentarium.org/sites/default/files/media/image/2017-02/AL027-01_pomme_de_terre_0_0.jpg",
+    "authorSocials": [
+      "facebook|facebook.com/alu",
+      "instagram|instagram.com/alu"
+    ],
+    "hotDeal": false,
+    "timestamp": 1789214032400
   }
 ]
