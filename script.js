@@ -19,12 +19,16 @@ let cachedProducts = null;
 let currentSha = null;
 
 async function fetchFromGitHub() {
+  // If no config locally (meaning it's a regular user), fetch public raw file
   const conf = getGHConfig();
-  if (!conf.pat) return [];
-  
+  if (!conf.owner || !conf.repo) {
+    console.log("No GH config found. You must be setting this up or need to run admin.html first.");
+    return [];
+  }
+
   try {
     const res = await fetch(`https://api.github.com/repos/${conf.owner}/${conf.repo}/contents/${DB_FILE}`, {
-      headers: { 'Authorization': `token ${conf.pat}`, 'Accept': 'application/vnd.github.v3+json' }
+      headers: conf.pat ? { 'Authorization': `token ${conf.pat}`, 'Accept': 'application/vnd.github.v3+json' } : { 'Accept': 'application/vnd.github.v3+json' }
     });
     
     if (res.status === 404) return []; // File doesn't exist yet
@@ -36,15 +40,15 @@ async function fetchFromGitHub() {
     return JSON.parse(content);
   } catch (err) {
     console.error(err);
-    showToast("Error connecting to GitHub Database");
     return [];
   }
 }
 
 async function saveToGitHub(productsArray) {
   const conf = getGHConfig();
-  const content = utf8ToBase64(JSON.stringify(productsArray, null, 2));
+  if (!conf.pat) { showToast("Not authenticated."); return; }
   
+  const content = utf8ToBase64(JSON.stringify(productsArray, null, 2));
   const body = {
     message: "Automated DB Update via GeekShop Admin",
     content: content,
@@ -59,11 +63,11 @@ async function saveToGitHub(productsArray) {
 
   if (!res.ok) throw new Error("Failed to save to GitHub");
   const data = await res.json();
-  currentSha = data.content.sha; // Update SHA for next write
+  currentSha = data.content.sha;
   cachedProducts = productsArray;
 }
 
-// ====== TOAST NOTIFICATION ======
+// ====== UI HELPERS ======
 function showToast(message) {
   let container = document.getElementById('toast-container');
   if (!container) {
@@ -83,11 +87,8 @@ function showToast(message) {
   }, 2500);
 }
 
-// ====== LOADER ======
 async function loadProducts(forceRefresh = false) {
-  if (forceRefresh || !cachedProducts) {
-    cachedProducts = await fetchFromGitHub();
-  }
+  if (forceRefresh || !cachedProducts) cachedProducts = await fetchFromGitHub();
   productsMap.clear();
   cachedProducts.forEach(p => productsMap.set(p.id, p));
   return cachedProducts;
@@ -95,53 +96,39 @@ async function loadProducts(forceRefresh = false) {
 
 function shuffle(array) { return array.slice().sort(() => Math.random() - 0.5); }
 
-// ====== SPECIFICATION PARSER ======
 function parseSpecsData(specData) {
   if (!specData) return {};
   if (typeof specData === 'object') return specData;
-  if (typeof specData === 'string') {
-    let str = specData.trim();
-    const specsObj = {};
-    if (str.includes('\n')) {
-      const lines = str.split('\n');
-      lines.forEach(line => {
-        if (line.includes(':')) {
-          const [k, ...v] = line.split(':');
-          const key = k.trim();
-          let val = v.join(':').trim();
-          if (key && val) specsObj[key] = val;
-        }
-      });
-      return specsObj;
+  const specsObj = {};
+  specData.split('\n').forEach(line => {
+    if (line.includes(':')) {
+      const [k, ...v] = line.split(':');
+      if (k.trim() && v.join(':').trim()) specsObj[k.trim()] = v.join(':').trim();
     }
-  }
-  return {};
+  });
+  return specsObj;
 }
 
-// ====== PRODUCT CARD UI ======
 function createProductCard(p, products) {
   const sameName = products.filter(other => other.name.toLowerCase() === p.name.toLowerCase());
   let slug = p.name.toLowerCase().replace(/\s+/g, '-');
   if (sameName.length > 1 && p.color) slug += '-' + p.color.toLowerCase().replace(/\s+/g, '-');
   
-  const images = p.images || [];
-  const score = p.score || 'N/A';
-  
   const card = document.createElement('div');
-  card.className = "group relative bg-surface-container-low rounded-xl overflow-hidden transition-all duration-500 hover:translate-y-[-8px] border border-white/5 hover:border-primary/30 flex flex-col";
+  card.className = "group relative bg-surface-container-low rounded-xl overflow-hidden transition-all duration-500 hover:translate-y-[-8px] border border-white/5 hover:border-primary/30 flex flex-col cursor-pointer";
+  card.onclick = () => window.location.href = `product.html?slug=${slug}`;
   
-  let badgeHTML = '';
-  if (p.hotDeal) badgeHTML += `<span class="bg-primary text-on-primary-fixed text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-xl mr-1 mb-1 inline-block">Top Pick</span>`;
+  let badgeHTML = p.hotDeal ? `<span class="bg-primary text-on-primary-fixed text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-xl mr-1 mb-1 inline-block">Top Pick</span>` : '';
   
   card.innerHTML = `
-    <div class="aspect-[4/5] bg-surface-container-lowest relative overflow-hidden cursor-pointer flex-shrink-0" onclick="window.location.href='product.html?slug=${slug}'">
-      <img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" src="${images[0] || 'logo.png'}" alt="${p.name}">
+    <div class="aspect-[4/5] bg-surface-container-lowest relative overflow-hidden flex-shrink-0">
+      <img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" src="${p.images?.[0] || 'logo.png'}" alt="${p.name}">
       <div class="absolute top-4 left-4 right-4 flex flex-wrap z-10">${badgeHTML}</div>
       <div class="absolute bottom-4 right-4 bg-surface-bright/90 backdrop-blur-md rounded-full px-3 py-1 flex items-center justify-center text-primary shadow-2xl z-20 font-bold text-sm">
-        <span class="material-symbols-outlined text-sm mr-1">star</span> ${score}/10
+        <span class="material-symbols-outlined text-sm mr-1">star</span> ${p.score || 'N/A'}/10
       </div>
     </div>
-    <div class="p-6 cursor-pointer flex-1 flex flex-col justify-between" onclick="window.location.href='product.html?slug=${slug}'">
+    <div class="p-6 flex-1 flex flex-col justify-between">
       <div>
         <h3 class="text-xl font-bold tracking-tight line-clamp-1 mb-2">${p.name}</h3>
         <p class="text-sm text-outline mb-4 line-clamp-2">${p.description || p.metaDescription || 'Detailed review available.'}</p>
@@ -155,22 +142,21 @@ function createProductCard(p, products) {
   return card;
 }
 
-// ====== PAGE ROUTERS ======
-
-// ADMIN PAGE LOGIC
-if (window.location.pathname.includes('admin.html')) {
-  document.addEventListener('DOMContentLoaded', () => {
+// ====== PAGE ROUTERS (DOM Based Detection) ======
+document.addEventListener('DOMContentLoaded', async () => {
+  
+  // 1. ADMIN PAGE
+  if (document.getElementById('login-section')) {
     const loginSec = document.getElementById('login-section');
     const dashSec = document.getElementById('dashboard-section');
     
-    // Check local storage auth
     if (getGHConfig().pat) {
       loginSec.classList.add('hidden');
       dashSec.classList.remove('hidden');
+      document.getElementById('logout-btn').classList.remove('hidden');
       loadProducts().then(renderAdminList);
     }
 
-    // Login Form
     document.getElementById('login-form').addEventListener('submit', (e) => {
       e.preventDefault();
       localStorage.setItem('gh_owner', document.getElementById('gh-owner').value.trim());
@@ -179,8 +165,6 @@ if (window.location.pathname.includes('admin.html')) {
       window.location.reload();
     });
 
-    // Logout
-    document.getElementById('logout-btn').classList.remove('hidden');
     document.getElementById('logout-btn').addEventListener('click', () => {
       localStorage.removeItem('gh_owner');
       localStorage.removeItem('gh_repo');
@@ -188,7 +172,6 @@ if (window.location.pathname.includes('admin.html')) {
       window.location.reload();
     });
 
-    // Tabs
     document.getElementById('tab-add').addEventListener('click', (e) => {
       document.getElementById('view-add').classList.remove('hidden');
       document.getElementById('view-manage').classList.add('hidden');
@@ -203,11 +186,8 @@ if (window.location.pathname.includes('admin.html')) {
       document.getElementById('tab-add').className = "px-6 py-2 text-xs font-bold uppercase tracking-widest rounded-lg text-outline hover:text-slate-200 transition-all border border-transparent";
     });
 
-    // Add / Edit Product
-    const form = document.getElementById('product-form');
     let editId = null;
-
-    form.addEventListener('submit', async (e) => {
+    document.getElementById('product-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('submit-btn');
       btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> Saving...`;
@@ -233,24 +213,19 @@ if (window.location.pathname.includes('admin.html')) {
 
       try {
         let products = await loadProducts();
-        if (editId) {
-          products = products.map(p => p.id === editId ? product : p);
-        } else {
-          products.push(product);
-        }
+        if (editId) products = products.map(p => p.id === editId ? product : p);
+        else products.push(product);
+        
         await saveToGitHub(products);
         showToast("Review published successfully!");
-        form.reset();
+        document.getElementById('product-form').reset();
         editId = null;
         document.getElementById('form-title').innerText = "Post New Review";
         renderAdminList();
-      } catch (err) {
-        showToast("Error saving to GitHub.");
-      }
+      } catch (err) { showToast("Error saving to GitHub."); }
       btn.innerHTML = `<span class="material-symbols-outlined">add_circle</span> Publish Post`;
     });
 
-    // Render Manage List
     async function renderAdminList() {
       const list = document.getElementById('admin-products-list');
       const products = await loadProducts();
@@ -290,15 +265,13 @@ if (window.location.pathname.includes('admin.html')) {
           document.getElementById('p-images').value = (p.images || []).join('\n');
           document.getElementById('p-merchants').value = (p.merchants || []).join('\n');
           document.getElementById('p-hot').checked = p.hotDeal || false;
-          
           document.getElementById('tab-add').click();
           window.scrollTo(0,0);
         };
         
         div.querySelector('.delete-btn').onclick = async () => {
           if (confirm("Delete this review forever?")) {
-            const filtered = products.filter(item => item.id !== p.id);
-            await saveToGitHub(filtered);
+            await saveToGitHub(products.filter(item => item.id !== p.id));
             showToast("Review deleted");
             renderAdminList();
           }
@@ -308,40 +281,28 @@ if (window.location.pathname.includes('admin.html')) {
     }
 
     document.getElementById('sync-catalog-btn').addEventListener('click', async () => {
-      showToast("Manual Sync triggered...");
       await loadProducts(true);
       showToast("Database Synced with GitHub");
     });
-  });
-}
+  }
 
-// INDEX PAGE LOGIC
-if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
-  document.addEventListener('DOMContentLoaded', async () => {
+  // 2. HOME PAGE (INDEX)
+  if (document.getElementById('interest-products')) {
     const products = await loadProducts();
-    if (!products.length) return;
-    
     const container = document.getElementById('interest-products');
-    if (container) {
-      container.innerHTML = '';
-      shuffle(products).slice(0, 8).forEach(p => container.appendChild(createProductCard(p, products)));
-    }
-  });
-}
+    container.innerHTML = '';
+    if (!products.length) container.innerHTML = `<div class="col-span-full py-12 text-center text-outline">No reviews yet. Admin needs to publish some.</div>`;
+    else shuffle(products).slice(0, 8).forEach(p => container.appendChild(createProductCard(p, products)));
+  }
 
-// PRODUCTS (CATALOG) PAGE LOGIC
-if (window.location.pathname.includes('products.html')) {
-  document.addEventListener('DOMContentLoaded', async () => {
+  // 3. CATALOG PAGE (PRODUCTS)
+  if (document.getElementById('products-grid')) {
     const container = document.getElementById('products-grid');
-    if (!container) return;
-    
-    const products = await loadProducts();
     const searchInput = document.getElementById('search-input');
+    const products = await loadProducts();
     
     const params = new URLSearchParams(window.location.search);
-    if (params.get('search') && searchInput) {
-      searchInput.value = params.get('search');
-    }
+    if (params.get('search') && searchInput) searchInput.value = params.get('search');
 
     function renderGrid() {
       let result = [...products].reverse();
@@ -349,23 +310,17 @@ if (window.location.pathname.includes('products.html')) {
         const q = searchInput.value.toLowerCase();
         result = result.filter(p => p.name.toLowerCase().includes(q));
       }
-      
       container.innerHTML = '';
-      if (!result.length) {
-         container.innerHTML = `<div class="col-span-full text-center py-12 text-outline bg-surface-container-low rounded-xl">No reviews found.</div>`;
-         return;
-      }
-      result.forEach(p => container.appendChild(createProductCard(p, products)));
+      if (!result.length) container.innerHTML = `<div class="col-span-full text-center py-12 text-outline bg-surface-container-low rounded-xl">No reviews found.</div>`;
+      else result.forEach(p => container.appendChild(createProductCard(p, products)));
     }
     
     if (searchInput) searchInput.addEventListener('input', renderGrid);
     renderGrid();
-  });
-}
+  }
 
-// SINGLE PRODUCT PAGE LOGIC
-if (window.location.pathname.includes('product.html')) {
-  document.addEventListener('DOMContentLoaded', async () => {
+  // 4. SINGLE PRODUCT PAGE
+  if (document.getElementById('product-name')) {
     const urlParams = new URLSearchParams(window.location.search);
     const slug = urlParams.get('slug');
     if (!slug) return;
@@ -374,9 +329,7 @@ if (window.location.pathname.includes('product.html')) {
     const product = products.find(p => {
       const sameName = products.filter(other => other.name.toLowerCase() === p.name.toLowerCase());
       let generatedSlug = p.name.toLowerCase().replace(/\s+/g, '-');
-      if (sameName.length > 1 && p.color) {
-        generatedSlug += '-' + p.color.toLowerCase().replace(/\s+/g, '-');
-      }
+      if (sameName.length > 1 && p.color) generatedSlug += '-' + p.color.toLowerCase().replace(/\s+/g, '-');
       return generatedSlug === slug;
     });
 
@@ -389,43 +342,41 @@ if (window.location.pathname.includes('product.html')) {
     document.getElementById('product-name').textContent = product.name;
     document.getElementById('product-price').innerHTML = `<span class="material-symbols-outlined text-3xl align-middle">star</span> ${product.score || 'N/A'}/10 Score`;
     document.getElementById('product-meta-desc').textContent = product.metaDescription || product.description;
-    document.getElementById('product-detailed-desc').innerHTML = product.detailedDescription;
+    document.getElementById('product-detailed-desc').innerHTML = product.detailedDescription || "No detailed review provided.";
     
     if (product.images && product.images.length > 0) {
       document.getElementById('main-image').src = product.images[0];
       const thumbGal = document.getElementById('thumbnail-gallery');
       thumbGal.innerHTML = product.images.map(img => `
-        <img src="${img}" class="aspect-square rounded-lg object-cover cursor-pointer hover:border-2 border-primary transition-all" onclick="document.getElementById('main-image').src='${img}'">
+        <img src="${img}" class="aspect-square rounded-lg object-cover cursor-pointer border border-transparent hover:border-primary transition-all" onclick="document.getElementById('main-image').src='${img}'">
       `).join('');
     }
 
-    // Render Specs
     const specs = parseSpecsData(product.specs);
     const specsGrid = document.getElementById('product-specs-grid');
     if (Object.keys(specs).length > 0) {
       specsGrid.innerHTML = Object.entries(specs).map(([k, v]) => `
         <div class="flex justify-between border-b border-white/5 pb-2">
-          <span class="text-outline text-sm">${k}</span>
-          <span class="text-on-surface font-medium text-sm text-right max-w-[60%]">${v}</span>
+          <span class="text-outline">${k}</span>
+          <span class="text-on-surface font-medium text-right max-w-[60%]">${v}</span>
         </div>
       `).join('');
+    } else {
+      specsGrid.innerHTML = `<span class="text-outline">No specs provided.</span>`;
     }
 
-    // Render Pros & Cons
     const proConSection = document.getElementById('pros-cons-section');
-    if (proConSection && (product.pros?.length || product.cons?.length)) {
+    if (product.pros?.length || product.cons?.length) {
       let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">`;
       html += `<div class="bg-green-500/10 border border-green-500/20 rounded-xl p-6">
                 <h3 class="text-green-400 font-bold mb-4 flex items-center gap-2"><span class="material-symbols-outlined">check_circle</span> Pros</h3>
                 <ul class="space-y-2 text-sm text-on-surface">` + 
-                (product.pros || []).map(p => `<li>• ${p}</li>`).join('') + 
-                `</ul></div>`;
+                (product.pros || []).map(p => `<li>• ${p}</li>`).join('') + `</ul></div>`;
                 
       html += `<div class="bg-red-500/10 border border-red-500/20 rounded-xl p-6">
                 <h3 class="text-red-400 font-bold mb-4 flex items-center gap-2"><span class="material-symbols-outlined">cancel</span> Cons</h3>
                 <ul class="space-y-2 text-sm text-on-surface">` + 
-                (product.cons || []).map(c => `<li>• ${c}</li>`).join('') + 
-                `</ul></div></div>`;
+                (product.cons || []).map(c => `<li>• ${c}</li>`).join('') + `</ul></div></div>`;
                 
       if (product.verdict) {
          html += `<div class="bg-surface-container-high rounded-xl p-6 border border-primary/20">
@@ -436,19 +387,15 @@ if (window.location.pathname.includes('product.html')) {
       proConSection.innerHTML = html;
     }
 
-    // Render Merchant Buy Links
     const orderRow = document.getElementById('order-row');
     if (product.merchants && product.merchants.length > 0) {
       orderRow.innerHTML = '<h4 class="text-xs font-bold uppercase tracking-widest text-outline mb-2">Check Prices:</h4>' + product.merchants.map(m => {
         const parts = m.split('|');
-        const name = parts[0] || 'Store';
-        const url = parts[1] || '#';
-        const price = parts[2] || 'Check Price';
         return `
-          <a href="${url}" target="_blank" class="w-full flex justify-between items-center bg-surface-container-high hover:bg-surface-variant border border-white/10 hover:border-primary/50 transition-all rounded-xl p-4 group">
-            <span class="font-bold font-display group-hover:text-primary transition-colors">${name}</span>
+          <a href="${parts[1] || '#'}" target="_blank" class="w-full flex justify-between items-center bg-surface-container-high hover:bg-surface-variant border border-white/10 hover:border-primary/50 transition-all rounded-xl p-4 group">
+            <span class="font-bold font-display group-hover:text-primary transition-colors">${parts[0] || 'Store'}</span>
             <div class="flex items-center gap-4">
-              <span class="text-primary font-mono text-sm">${price}</span>
+              <span class="text-primary font-mono text-sm">${parts[2] || 'Check Price'}</span>
               <span class="material-symbols-outlined text-outline group-hover:text-white transition-colors">open_in_new</span>
             </div>
           </a>
@@ -457,5 +404,5 @@ if (window.location.pathname.includes('product.html')) {
     } else {
       orderRow.innerHTML = '<div class="p-4 bg-surface-container rounded-xl text-center text-outline text-sm border border-white/5">No active listings available.</div>';
     }
-  });
-}
+  }
+});

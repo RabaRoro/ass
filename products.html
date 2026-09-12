@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>The Geek Shop | Keyboard Reviews & Guides</title>
+  <title>All Reviews | The Geek Shop</title>
   <link rel="icon" type="image/x-icon" href="logo t.png"> 
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
@@ -13,7 +13,6 @@
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
     body { font-family: 'Inter', sans-serif; background-color: #0c1322; color: #dce2f7; overflow-x: hidden; }
     h1, h2, h3, .font-display { font-family: 'Space Grotesk', sans-serif; }
-    .kinetic-grid { background-image: linear-gradient(to right, rgba(236, 215, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(236, 215, 255, 0.03) 1px, transparent 1px); background-size: 40px 40px; }
   </style>
 
   <script id="tailwind-config">
@@ -23,42 +22,38 @@
             "surface-bright": "#323949", "surface-container": "#191f2f", "surface-variant": "#2e3545",
             "surface-container-low": "#141b2b", "surface": "#0c1322", "surface-container-high": "#232a3a", 
             "outline": "#968e9a", "background": "#0c1322", "surface-container-lowest": "#070e1d",
-            "on-surface": "#dce2f7", "primary": "#ecd7ff", "on-surface-variant": "#cdc3d0", 
-            "primary-fixed": "#efdbff", "primary-container": "#d8b4fe"
+            "on-surface": "#dce2f7", "primary": "#ecd7ff"
       } } }
     }
   </script>
 </head>
 
-<body class="bg-background selection:bg-primary/30 min-h-screen flex flex-col kinetic-grid">
+<body class="bg-background selection:bg-primary/30 min-h-screen flex flex-col">
   <header class="bg-[#0c1322]/80 backdrop-blur-xl top-0 sticky z-[60] border-b border-white/5">
     <div class="flex justify-between items-center px-6 lg:px-8 py-4 w-full max-w-screen-2xl mx-auto">
       <a href="index.html" class="flex items-center gap-2 text-2xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-purple-200 to-purple-400 font-display">
         The Geek Shop Blog
       </a>
+      
+      <div class="hidden md:flex items-center relative w-96">
+        <span class="material-symbols-outlined absolute left-3 text-slate-500 text-sm">search</span>
+        <input type="text" id="search-input" placeholder="Search reviews..." class="w-full bg-surface-container-lowest border border-white/5 rounded-xl pl-9 pr-4 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-all">
+      </div>
+
       <nav class="hidden md:flex items-center space-x-8 font-display tracking-tight">
-        <a class="text-slate-400 hover:text-purple-300 transition-colors" href="products.html">All Reviews</a>
+        <a class="text-purple-300 border-b-2 border-purple-400 pb-1" href="products.html">All Reviews</a>
       </nav>
     </div>
   </header>
 
-  <main class="flex-1 w-full max-w-screen-2xl mx-auto px-6 lg:px-8 py-12 lg:py-20">
-    <div class="max-w-3xl mb-16">
-      <h1 class="text-5xl lg:text-7xl font-display font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-primary/60 mb-6">Honest Reviews for Enthusiasts.</h1>
-      <p class="text-lg text-outline leading-relaxed">Deep dives into the latest mechanical keyboards, switches, and keycaps. No fluff, just specs, sound tests, and raw opinions.</p>
-    </div>
-
-    <div class="flex justify-between items-end mb-8">
-      <h2 class="text-2xl font-display font-bold">Latest Drops & Top Picks</h2>
-      <a href="products.html" class="text-sm font-bold text-primary hover:text-white transition-colors flex items-center gap-1">View Catalog <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
-    </div>
-
-    <div id="interest-products" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
-      <!-- Loading State -->
-      <div class="col-span-full py-12 text-center text-outline animate-pulse">Loading latest reviews...</div>
+  <main class="flex-1 max-w-screen-2xl w-full mx-auto px-6 lg:px-8 py-8 lg:py-12">
+    <div class="flex flex-col space-y-12">
+      <div id="products-grid" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- JS Injected Cards -->
+      </div>
     </div>
   </main>
-
+  
   <script type="module" src="script.js"></script>
 </body>
 </html>
