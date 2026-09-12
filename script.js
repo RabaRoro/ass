@@ -4,8 +4,9 @@ const META_FILE = `${DB_DIR}/megacatalogmeta.json`;
 
 function getGHConfig() {
   return {
-    owner: localStorage.getItem('gh_owner'),
-    repo: localStorage.getItem('gh_repo'),
+    // REPLACED: Hardcoded owner and repo
+    owner: 'RabaRoro', 
+    repo: 'ass',
     pat: localStorage.getItem('gh_pat')
   };
 }
@@ -148,7 +149,6 @@ function createProductCard(p, compact = false) {
   let paddingClass = compact ? 'p-4' : 'p-6';
   let descClass = compact ? 'hidden' : 'text-sm text-outline mb-4 line-clamp-2';
 
-  // Support for both meta schema and full schema image references
   let imageSrc = (p.images && p.images[0]) || p.image || 'logo.png';
 
   card.innerHTML = `
@@ -212,17 +212,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('p-merchants')?.addEventListener('input', replaceDoubleSpace);
     document.getElementById('p-author-socials')?.addEventListener('input', replaceDoubleSpace);
 
+    // REPLACED: Only store the PAT now
     document.getElementById('login-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      localStorage.setItem('gh_owner', document.getElementById('gh-owner').value.trim());
-      localStorage.setItem('gh_repo', document.getElementById('gh-repo').value.trim());
       localStorage.setItem('gh_pat', document.getElementById('gh-pat').value.trim());
       window.location.reload();
     });
 
+    // REPLACED: Only remove the PAT now
     document.getElementById('logout-btn').addEventListener('click', () => {
-      localStorage.removeItem('gh_owner');
-      localStorage.removeItem('gh_repo');
       localStorage.removeItem('gh_pat');
       window.location.reload();
     });
@@ -291,23 +289,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         let metaDB = await fetchFile(META_FILE);
         let targetShard = editShard;
 
-        // Routing Logic: Find a shard for new items
         if (!targetShard) {
            const shardCounts = {};
            metaDB.forEach(m => { shardCounts[m.shard] = (shardCounts[m.shard] || 0) + 1; });
            
-           // Find highest shard number
            const shardNums = Object.keys(shardCounts).map(s => parseInt(s.replace('shard-', '').replace('.json', ''))).filter(n => !isNaN(n));
            let maxShard = shardNums.length > 0 ? Math.max(...shardNums) : 1;
            
-           // Max 10 items per shard
            if ((shardCounts[`shard-${maxShard}.json`] || 0) >= 10) {
                maxShard += 1;
            }
            targetShard = `shard-${maxShard}.json`;
         }
 
-        // 1. Save to Shard
         const shardPath = `${DB_DIR}/${targetShard}`;
         let shardData = await fetchFile(shardPath) || [];
         const pIndex = shardData.findIndex(p => p.id === product.id);
@@ -315,7 +309,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         else shardData.push(product);
         await saveFile(shardPath, shardData);
 
-        // 2. Update MetaDB
         const metaObj = {
             id: product.id,
             slug: product.name.toLowerCase().replace(/\s+/g, '-'),
@@ -410,13 +403,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         div.querySelector('.delete-btn').onclick = async () => {
           if (confirm(`Delete '${p.name}' from ${p.shard} forever?`)) {
-            // Delete from Shard
             const shardPath = `${DB_DIR}/${p.shard}`;
             let shardData = await fetchFile(shardPath);
             shardData = shardData.filter(x => x.id !== p.id);
             await saveFile(shardPath, shardData);
 
-            // Delete from Meta
             const newMeta = metaDB.filter(x => x.id !== p.id);
             await saveFile(META_FILE, newMeta);
             
@@ -458,10 +449,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const layoutSelect = document.getElementById('filter-layout');
     const connSelect = document.getElementById('filter-connectivity');
 
-    // Load ONLY the lightweight Meta Catalog
     const metaDB = await fetchFile(META_FILE) || [];
     
-    // Auto-parse Layouts & Connectivities from the meta's embedded specs
     const layouts = new Set();
     const connectivities = new Set();
     
@@ -552,7 +541,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const slug = urlParams.get('slug');
     if (!slug) return;
 
-    // Load Meta first to find where the full product is stored
     const metaDB = await fetchFile(META_FILE);
     const targetMeta = metaDB.find(m => (m.slug || m.name.toLowerCase().replace(/\s+/g, '-')) === slug);
 
@@ -561,7 +549,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Now load the Specific Shard to get the heavy text (HTML desc, pros, cons)
     const shardData = await fetchFile(`${DB_DIR}/${targetMeta.shard}`);
     const product = shardData.find(p => p.id === targetMeta.id);
 
@@ -682,7 +669,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       orderRow.innerHTML = '<div class="px-4 py-2 bg-surface-container rounded-lg text-outline text-sm border border-white/5">No active listings available.</div>';
     }
 
-    // Similar Products - We can use the MetaDB directly for rendering these cards!
     const similarContainer = document.getElementById('similar-grid');
     let pPriceVal = parseFloat((product.price || "").replace(/[^0-9.]/g, '')) || 0;
     
