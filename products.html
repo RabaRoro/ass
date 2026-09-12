@@ -30,27 +30,72 @@
 
 <body class="bg-background selection:bg-primary/30 min-h-screen flex flex-col">
   <header class="bg-[#0c1322]/80 backdrop-blur-xl top-0 sticky z-[60] border-b border-white/5">
-    <div class="flex justify-between items-center px-6 lg:px-8 py-4 w-full max-w-screen-2xl mx-auto">
-      <a href="index.html" class="flex items-center gap-2 text-2xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-purple-200 to-purple-400 font-display">
+    <!-- Updated Header: flex-wrap ensures the search bar neatly stacks on mobile views -->
+    <div class="flex flex-wrap md:flex-nowrap justify-between items-center px-6 lg:px-8 py-4 w-full max-w-screen-2xl mx-auto gap-4 md:gap-8">
+      
+      <a href="index.html" class="flex flex-shrink-0 items-center gap-2 text-2xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-purple-200 to-purple-400 font-display">
         The Geek Shop Blog
       </a>
       
-      <div class="hidden md:flex items-center relative w-96">
+      <!-- Visible on mobile: Order changes to push it to a new row on small screens -->
+      <div class="flex order-last md:order-none items-center relative w-full md:w-96 md:mx-auto">
         <span class="material-symbols-outlined absolute left-3 text-slate-500 text-sm">search</span>
         <input type="text" id="search-input" placeholder="Search reviews..." class="w-full bg-surface-container-lowest border border-white/5 rounded-xl pl-9 pr-4 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-all">
       </div>
 
-      <nav class="hidden md:flex items-center space-x-8 font-display tracking-tight">
+      <nav class="hidden md:flex flex-shrink-0 items-center space-x-8 font-display tracking-tight">
         <a class="text-purple-300 border-b-2 border-purple-400 pb-1" href="products.html">All Reviews</a>
       </nav>
     </div>
   </header>
 
   <main class="flex-1 max-w-screen-2xl w-full mx-auto px-6 lg:px-8 py-8 lg:py-12">
-    <div class="flex flex-col space-y-12">
-      <div id="products-grid" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
-        <!-- JS Injected Cards -->
+    <!-- Added Grid Layout for Sidebar and Products -->
+    <div class="flex flex-col lg:flex-row gap-8">
+      
+      <!-- Filters Sidebar -->
+      <aside class="w-full lg:w-72 flex-shrink-0">
+        <div class="bg-surface-container-low rounded-2xl p-6 border border-white/5 sticky top-28 space-y-6">
+          <h2 class="text-xl font-display font-bold text-primary mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined">filter_alt</span> Filters
+          </h2>
+          
+          <!-- Price Range -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-widest text-outline mb-3">Price Range (৳)</label>
+            <div class="flex items-center gap-3">
+              <input type="number" id="filter-price-min" placeholder="Min" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-all shadow-inner">
+              <span class="text-outline text-sm">-</span>
+              <input type="number" id="filter-price-max" placeholder="Max" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-all shadow-inner">
+            </div>
+          </div>
+
+          <!-- Keyboard Layout -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-widest text-outline mb-3">Keyboard Layout</label>
+            <select id="filter-layout" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-3 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-all cursor-pointer">
+              <option value="">Any Layout</option>
+            </select>
+          </div>
+
+          <!-- Connectivity -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-widest text-outline mb-3">Connectivity</label>
+            <select id="filter-connectivity" class="w-full bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-3 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-all cursor-pointer">
+              <option value="">Any Connectivity</option>
+            </select>
+          </div>
+          
+        </div>
+      </aside>
+
+      <!-- Products Grid (Adjusted columns to account for sidebar) -->
+      <div class="flex-1 min-w-0">
+        <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <!-- JS Injected Cards -->
+        </div>
       </div>
+      
     </div>
   </main>
   
